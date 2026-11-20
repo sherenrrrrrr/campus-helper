@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN" data-type="software">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="问问校园问卷互助：回答问卷赚积分，用积分发布自己的问卷。本地演示原型。">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#EEF2F5">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <title>问问 · 校园问卷互助</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2336566f'/%3E%3Ctext x='13' y='46' font-size='40' fill='white'%3E问%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <div class="demo-banner"><span>演示环境</span> 示例账号与积分，仅保存在当前浏览器 <button type="button" data-action="guide">查看演示指南</button></div>
+  <header class="header"><div class="header-inner">
+    <a href="#hall" class="brand" aria-label="问问，回到问卷大厅"><span class="brand-mark">问</span><span>问问<small>校园问卷互助</small></span></a>
+    <nav class="desktop-nav" aria-label="主导航" id="desktop-nav"></nav>
+    <div class="account-area"><button type="button" class="notice-toggle icon-button" data-action="notices" aria-label="查看通知" id="notice-toggle"></button><div class="account-wrap"><button type="button" id="account-toggle" class="account-toggle" data-action="account" aria-expanded="false"></button><div id="account-menu" class="account-menu" hidden></div></div></div>
+  </div></header>
+  <div id="storage-warning" class="storage-warning" role="status" hidden></div>
+  <main id="main" tabindex="-1"></main>
+  <footer class="footer"><span>问问，让互助在校园里流动。</span><div><button type="button" data-action="rules">积分规则</button><button type="button" data-action="privacy">数据与隐私</button><span>本地原型 v2</span></div></footer>
+  <nav class="mobile-nav" aria-label="手机主导航" id="mobile-nav"></nav>
+  <dialog id="dialog" aria-labelledby="dialog-title"><div id="dialog-body"></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="noscript">此演示需要 JavaScript 才能运行。请启用 JavaScript 后重新打开。</p></noscript>
+  <script src="data/points.js"></script>
+  <script src="data/seed.js"></script>
+  <script src="admin.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

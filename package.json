@@ -1,0 +1,12 @@
+{
+  "name": "campus-helper",
+  "version": "0.2.0",
+  "private": true,
+  "description": "校园问卷互助平台，本地演示原型",
+  "scripts": {
+    "dev": "node scripts/serve.cjs",
+    "start": "node scripts/serve.cjs",
+    "build": "node scripts/build.cjs",
+    "test": "node --test tests/model.test.cjs tests/build.test.cjs"
+  }
+}

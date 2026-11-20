@@ -1,0 +1,7 @@
+# Local scratch files and cloned reference repositories
+/work/
+/dist/
+/node_modules/
+# Historical handoff backups duplicate the source tree and bundled skills.
+/outputs/campus-helper-2026-11-17-complete/
+/outputs/campus-helper-2026-11-17-complete.zip

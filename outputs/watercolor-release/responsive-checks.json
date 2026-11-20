@@ -1,0 +1,126 @@
+[
+  {
+    "client": 1425,
+    "heading": "让互助在校园里流动。",
+    "route": "#hall",
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "client": 1425,
+    "heading": "发出你的问卷",
+    "route": "#publish",
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "client": 1440,
+    "heading": "我的任务",
+    "route": "#tasks",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "client": 1440,
+    "heading": "我的积分",
+    "route": "#points",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "client": 1440,
+    "heading": "管理员工作台",
+    "route": "#admin",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "client": 1425,
+    "heading": "管理员工作台",
+    "route": "#admin?tab=tasks",
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "client": 1425,
+    "heading": "管理员工作台",
+    "route": "#admin?tab=users",
+    "scroll": 1425,
+    "width": 1440
+  },
+  {
+    "client": 1440,
+    "heading": "管理员工作台",
+    "route": "#admin?tab=data",
+    "scroll": 1440,
+    "width": 1440
+  },
+  {
+    "client": 375,
+    "heading": "让互助在校园里流动。",
+    "route": "#hall",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "发出你的问卷",
+    "route": "#publish",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "我的任务",
+    "route": "#tasks",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "我的积分",
+    "route": "#points",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "管理员工作台",
+    "route": "#admin",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "管理员工作台",
+    "route": "#admin?tab=tasks",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "管理员工作台",
+    "route": "#admin?tab=users",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 375,
+    "heading": "管理员工作台",
+    "route": "#admin?tab=data",
+    "scroll": 375,
+    "width": 390
+  },
+  {
+    "client": 753,
+    "route": "#hall",
+    "scroll": 753,
+    "width": 768
+  },
+  {
+    "client": 1009,
+    "route": "#hall",
+    "scroll": 1009,
+    "width": 1024
+  }
+]
