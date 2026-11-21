@@ -1,8 +1,13 @@
 /* Pure demo domain model. No browser APIs, network calls, or mutable shared state. */
 (function (root) {
   'use strict';
+  // All stored amounts use integer tenths of a point. Public action inputs use displayed points.
+  const SCALE = 10;
+  const toUnits = points => Math.round(Number(points) * SCALE);
+  const toPoints = units => units / SCALE;
+  const fmtPoints = units => Number.isInteger(toPoints(units)) ? String(toPoints(units)) : toPoints(units).toFixed(1);
   const HOUR = 3600000, DAY = 24 * HOUR;
-  const RULES = Object.freeze({ grant: 100, claimHours: 24, reviewHours: 48, appealDays: 7, dailyLimit: 5 });
+  const RULES = Object.freeze({ grant: 100 * SCALE, claimHours: 24, reviewHours: 48, appealDays: 7, dailyLimit: 5 });
   const REASONS = ['码对不上', '截图不清晰', '看不出完成', '未按要求填写', '不符合目标人群', '其他'];
   const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
   const CODE_LENGTH = 4;
@@ -180,7 +185,7 @@
     entry(s, x.userId, t.reward, 0, 'reward', reason, t.id, x.id, user(s, t.publisherId).nickname);
     t.escrow -= t.reward; x.status = 'approved'; x.resolvedAt = s.now; x.automatic = automatic; x.final = true;
     record(s, x, '通过', reason, automatic ? 'system' : s.currentUserId);
-    notice(s, x.userId, `「${t.title}」已通过，${t.reward} 积分已到账。`);
+    notice(s, x.userId, `「${t.title}」已通过，${fmtPoints(t.reward)} 积分已到账。`);
   }
   function publisherRisk(s, publisherId) {
     const ids = new Set(s.tasks.filter(t => t.publisherId === publisherId && taskType(t) === 'survey').map(t => t.id));
@@ -237,16 +242,19 @@
     if (taskType(input) === 'experiment') return validateExperimentPublish(s, input);
     const errors = {}, n = key => Number(input[key]);
     const len = [...String(input.title || '').trim()].length;
-    if (len < 5 || len > 30) errors.title = '标题需要 5～30 个字。';
+    if (len < 1) errors.title = '请填写问卷标题。';
+    else if (len > 60) errors.title = `标题最多 60 个字，当前 ${len} 个字。`;
     if (!String(input.description || '').trim()) errors.description = '请说明问卷用途和填写要求。';
     if (!String(input.audienceText || '').trim()) errors.audienceText = '请说明希望哪些同学填写。';
     if (!input.topic) errors.topic = '请选择问卷主题。';
     if (!Number.isInteger(n('minutes')) || n('minutes') < 1 || n('minutes') > 60) errors.minutes = '预计耗时需要为 1～60 分钟。';
-    if (!Number.isInteger(n('reward')) || n('reward') < 5 || n('reward') > 50) errors.reward = '单份奖励为 5～50 分。';
-    if (!Number.isInteger(n('quota')) || n('quota') < 1 || n('quota') > 20) errors.quota = '单次招募 1～20 份，大样本需求请联系管理员。';
+    const rewardUnits = toUnits(n('reward'));
+    if (!Number.isFinite(n('reward')) || n('reward') < 5 || n('reward') > 50) errors.reward = '单份奖励为 5～50 分，可保留一位小数。';
+    else if (Math.abs(toPoints(rewardUnits) - n('reward')) > 1e-9) errors.reward = '单份奖励最多保留一位小数。';
+    if (!Number.isInteger(n('quota')) || n('quota') < 1 || n('quota') > 200) errors.quota = '招募数量必须是整数，范围 1～200 份。';
     try { const normalized = normalizeLink(input.link); if (s.tasks.some(t => taskType(t) === 'survey' && normalizeLink(t.link) === normalized)) errors.link = '这个问卷已经有人发过了，请勿重复发布。'; } catch (e) { errors.link = e.message; }
-    if (!Number.isInteger(n('days')) || n('days') < 1 || n('days') > 14) errors.days = '招募时间为 1～14 天。';
-    if (n('reward') * n('quota') > user(s).available) errors.budget = `还差 ${n('reward') * n('quota') - user(s).available} 分。`;
+    if (!Number.isInteger(n('days')) || n('days') < 1 || n('days') > 60) errors.days = '招募时间为 1～60 天。';
+    if (rewardUnits * n('quota') > user(s).available) errors.budget = `还差 ${fmtPoints(rewardUnits * n('quota') - user(s).available)} 分。`;
     return errors;
   }
   function validateExperimentPublish(s, i) {
@@ -268,7 +276,7 @@
     });
     for (const field of ['ethicsConfirmed', 'publicPlaceConfirmed', 'privacyConfirmed']) if (i[field] !== true) errors[field] = '发布实验前，请勾选全部伦理、安全与隐私确认。';
     const quota = Array.isArray(i.slots) ? i.slots.reduce((sum, slot) => sum + Number(slot.capacity), 0) : 0;
-    if (+i.reward * quota > user(s).available) errors.budget = `实验预算还差 ${+i.reward * quota - user(s).available} 分。`;
+    if (toUnits(i.reward) * quota > user(s).available) errors.budget = `实验预算还差 ${fmtPoints(toUnits(i.reward) * quota - user(s).available)} 分。`;
     return errors;
   }
   function assertState(s) {
@@ -324,7 +332,7 @@
       const errors = validatePublish(s, action.input); ensure(!Object.keys(errors).length, Object.values(errors)[0]);
       const i = action.input;
       const experiment = taskType(i) === 'experiment', quota = experiment ? i.slots.reduce((sum, slot) => sum + Number(slot.capacity), 0) : +i.quota;
-      const t = { id: uid(s, 't'), publisherId: actor.id, type: experiment ? 'experiment' : 'survey', title: i.title.trim(), description: i.description.trim(), topic: i.topic || '学习研究', audienceText: String(i.audienceText || i.requirements || '全校同学').trim(), audience: [...new Set(i.audience || ['全校同学'])], minutes: experiment ? +i.slots[0].minutes : +i.minutes, link: experiment ? '' : i.link.trim(), reward: +i.reward, quota, status: 'open', escrow: +i.reward * quota, createdAt: s.now, deadline: s.now + +i.days * DAY, stopped: false, removalReason: '', reports: [] };
+      const t = { id: uid(s, 't'), publisherId: actor.id, type: experiment ? 'experiment' : 'survey', title: i.title.trim(), description: i.description.trim(), topic: i.topic || '学习研究', audienceText: String(i.audienceText || i.requirements || '全校同学').trim(), audience: [...new Set(i.audience || ['全校同学'])], minutes: experiment ? +i.slots[0].minutes : +i.minutes, link: experiment ? '' : i.link.trim(), reward: toUnits(i.reward), quota, status: 'open', escrow: toUnits(i.reward) * quota, createdAt: s.now, deadline: s.now + +i.days * DAY, stopped: false, removalReason: '', reports: [] };
       Object.assign(t, completionSettings(i), { codeSupported: supportsSurveyCode(t.link) });
       if (experiment) Object.assign(t, { format: i.format, location: i.location.trim(), slots: i.slots.map(slot => ({ id: uid(s, 'slot'), startAt: new Date(slotStartAt(slot)).toISOString(), minutes: +slot.minutes, capacity: +slot.capacity, booked: [], closed: false })), requirements: String(i.requirements || '').trim().slice(0, 1500), cashNote: String(i.cashNote || '').trim().slice(0, 200), ethicsConfirmed: true, publicPlaceConfirmed: true, privacyConfirmed: true, codeRequired: false, codeMode: 'none', codeSupported: false });
       entry(s, actor.id, -t.escrow, t.escrow, 'freeze', experiment ? '发布实验，冻结招募预算' : '发布问卷，冻结招募预算', t.id, null, `任务 ${t.id}`); s.tasks.push(t);
@@ -487,7 +495,7 @@
     } else if (action.type === 'manageUser') {
       admin(); const u = user(s, action.userId); ensure(u.role !== 'admin', '演示管理员账号不能被限制。');
       ensure(String(action.reason || '').trim(), '管理操作必须填写原因。');
-      if (action.operation === 'adjust') { ensure(Number.isSafeInteger(action.amount) && action.amount !== 0 && Math.abs(action.amount) <= 10000, '调账请输入非零整数，单次不超过 10000 分。'); entry(s, u.id, action.amount, 0, 'adjust', '管理员调账：' + String(action.reason).trim(), null, null, actor.nickname); }
+      if (action.operation === 'adjust') { const amount = toUnits(action.amount); ensure(Number.isFinite(action.amount) && Number.isSafeInteger(amount) && amount !== 0 && Math.abs(action.amount) <= 10000 && Math.abs(toPoints(amount) - action.amount) < 1e-9, '调账请输入非零金额，最多一位小数，单次不超过 10000 分。'); entry(s, u.id, amount, 0, 'adjust', '管理员调账：' + String(action.reason).trim(), null, null, actor.nickname); }
       else if (action.operation === 'restrict') { ensure(Number.isInteger(action.days) && action.days >= 1 && action.days <= 30, '限制天数为 1～30。'); u.restrictedUntil = s.now + action.days * DAY; }
       else if (action.operation === 'ban') { u.banned = true; u.violations++; }
       else if (action.operation === 'restore') { u.banned = false; u.restrictedUntil = null; }
@@ -508,7 +516,18 @@
     for (const x of taskSubs(s, t.id).filter(x => x.status === 'locked')) { x.status = 'cancelled'; x.final = true; x.resolvedAt = s.now; record(s, x, '下架取消领取', reason); }
     notice(s, t.publisherId, `「${t.title}」已下架：${reason}。已有通过不回滚，在途审核及申诉仍需结算。`); updateTask(s, t);
   }
-  const api = { RULES, REASONS, HOUR, DAY, clone, user, task, sub, taskSubs, stats, remaining, approved, normalizeLink, platform, validatePublish, publisherRisk, firstProtected, isReserved, assertState, commit, entry, hasDirtyData, batchApprovalEligibility, supportsSurveyCode, withCode, surveyLaunchUrl, canReviewCode, taskCode, submissionToken, taskType, slotStartAt, slotEndAt, slotRemaining };
+  function migrateState(previous) {
+    ensure(previous && [2, 3].includes(previous.version), '不支持的演示数据版本。');
+    const s = clone(previous);
+    if (s.version === 3) { assertState(s); return s; }
+    const scale = value => { ensure(Number.isSafeInteger(value) && Number.isSafeInteger(value * SCALE), '旧积分数据无效。'); return value * SCALE; };
+    for (const u of s.users) { u.available = scale(u.available); u.frozen = scale(u.frozen); }
+    for (const t of s.tasks) { t.reward = scale(t.reward); t.escrow = scale(t.escrow); }
+    for (const row of s.ledger) for (const key of ['delta', 'availableDelta', 'frozenDelta']) row[key] = scale(row[key]);
+    s.version = 3;
+    assertState(s); return s;
+  }
+  const api = { SCALE, toUnits, toPoints, fmtPoints, migrateState, RULES, REASONS, HOUR, DAY, clone, user, task, sub, taskSubs, stats, remaining, approved, normalizeLink, platform, validatePublish, publisherRisk, firstProtected, isReserved, assertState, commit, entry, hasDirtyData, batchApprovalEligibility, supportsSurveyCode, withCode, surveyLaunchUrl, canReviewCode, taskCode, submissionToken, taskType, slotStartAt, slotEndAt, slotRemaining };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.CampusModel = api;
 })(globalThis);

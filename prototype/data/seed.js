@@ -20,16 +20,17 @@
     ['编程入门，最让你卡住的是什么', '学习研究', 6, 15, 6, '计算机学院', '面向学过编程课程的同学，了解学习难点和求助渠道。'],
     ['毕业季，你会怎样处理闲置书籍', '校园生活', 3, 10, 8, '大四', '捐赠、转卖还是带走？希望了解毕业生处理教材和课外书的方式。']
   ];
-  function seed(timestamp = Date.now(), options = {}) {
-    const s = { version: 2, sequence: 0, now: timestamp, timeOffset: 0, currentUserId: 'u1', users: [], tasks: [], submissions: [], ledger: [], notices: [], audit: [] };
-    const names = ['小林', '阿哲', '管理员', '许嘉宁', '陈沐', '周雨晴', '陆言', '沈悦', '林可', '吴桐', '郑一凡', '江晴', '顾然', '程语', '苏禾', '方知', '何安', '叶青', '赵予'];
+  function seed(timestamp = Date.now()) {
+    const s = { version: 3, sequence: 0, now: timestamp, timeOffset: 0, currentUserId: 'u1', users: [], tasks: [], submissions: [], ledger: [], notices: [], audit: [] };
+    const names = ['小林', '阿哲', '管理员', '许嘉宁', '陈沐', '周雨晴', '陆言', '沈悦', '林可', '吴桐', '郑一凡', '江晴', '顾然', '程语', '苏禾', '方知', '何安', '叶青', '赵予', '研究者·林老师'];
     names.forEach((nickname, i) => {
       const id = 'u' + (i + 1), createdAt = timestamp - (16 + i) * M.DAY;
-      s.users.push({ id, nickname, role: i === 2 ? 'admin' : 'user', available: 0, frozen: 0, createdAt, lastActiveAt: timestamp - (i % 5) * M.DAY, banned: false, violations: 0, restrictedUntil: null, sample: i > 2 });
-      M.entry(s, id, 100, 0, 'grant', '新用户启动积分', null, null, '演示系统'); s.ledger[s.ledger.length - 1].createdAt = createdAt;
+      s.users.push({ id, nickname, role: i === 2 ? 'admin' : 'user', available: 0, frozen: 0, createdAt, lastActiveAt: timestamp - (i % 5) * M.DAY, banned: false, violations: 0, restrictedUntil: null, sample: i > 2 && i !== 19, isDemoResearcher: i === 19 });
+      M.entry(s, id, M.RULES.grant, 0, 'grant', '新用户启动积分', null, null, '演示系统'); s.ledger[s.ledger.length - 1].createdAt = createdAt;
     });
+    M.entry(s, 'u20', M.toUnits(2900), 0, 'adjust', '研究者大样本演示启动额度', null, null, '演示系统');
     samples.forEach((a, i) => {
-      const t = { id: 'sample-' + i, publisherId: 'u' + (i + 4), title: a[0], topic: a[1], minutes: a[2], reward: a[3], quota: a[4], audience: [a[5]], audienceText: a[5], description: a[6], link: 'https://surveys.example/campus/' + (i + 1), status: 'open', escrow: a[3] * a[4], createdAt: timestamp - (i + 1) * 2 * M.HOUR, deadline: timestamp + (3 + i % 5) * M.DAY, stopped: false, removalReason: '', reports: [] };
+      const t = { id: 'sample-' + i, publisherId: 'u' + (i + 4), title: a[0], topic: a[1], minutes: a[2], reward: M.toUnits(a[3]), quota: a[4], audience: [a[5]], audienceText: a[5], description: a[6], link: 'https://surveys.example/campus/' + (i + 1), status: 'open', escrow: M.toUnits(a[3]) * a[4], createdAt: timestamp - (i + 1) * 2 * M.HOUR, deadline: timestamp + (3 + i % 5) * M.DAY, stopped: false, removalReason: '', reports: [] };
       s.tasks.push(t); M.entry(s, t.publisherId, -t.escrow, t.escrow, 'freeze', '发布问卷，冻结招募预算', t.id, null, `任务 ${t.id}`);
       // Sample researchers answered one another. Every visible completion is backed by a real ledger transfer.
       for (let j = 0; j < i % 4; j++) {
@@ -40,16 +41,16 @@
         M.entry(s, responder, t.reward, 0, 'reward', '示例问卷审核通过', t.id, x.id, M.user(s, t.publisherId).nickname);
       }
     });
-    M.assertState(s); return options.includeResearcher ? withResearcher(s) : s;
+    M.assertState(s); return s;
   }
   function withResearcher(previous) {
-    const s = M.clone(previous);
-    if (s.users.some(u => u.isDemoResearcher)) return s;
-    const id = 'researcher';
-    if (s.users.some(u => u.id === id)) throw new Error('研究者演示账号编号冲突。');
+    const s = M.migrateState(previous);
+    const existing = s.users.find(u => u.isDemoResearcher || u.id === 'researcher' || (u.id === 'u20' && /^研究者/.test(u.nickname)));
+    if (existing) { existing.isDemoResearcher = true; return s; }
+    const id = s.users.some(u => u.id === 'u20') ? 'researcher' : 'u20';
     s.users.push({ id, nickname: '研究者·林老师', role: 'user', isDemoResearcher: true, available: 0, frozen: 0, createdAt: s.now, lastActiveAt: s.now, banned: false, violations: 0, restrictedUntil: null, sample: false });
-    M.entry(s, id, 100, 0, 'grant', '研究者演示账号启动积分', null, null, '演示系统');
-    M.entry(s, id, 2900, 0, 'adjust', '研究者演示额度补足至 3000 分，不代表真实注册奖励', null, null, '演示系统初始化');
+    M.entry(s, id, M.RULES.grant, 0, 'grant', '研究者演示账号启动积分', null, null, '演示系统');
+    M.entry(s, id, M.toUnits(2900), 0, 'adjust', '研究者演示额度补足至 3000 分', null, null, '演示系统初始化');
     M.assertState(s); return s;
   }
   const api = { seed, withResearcher, TOPICS, AUDIENCES };

@@ -1,0 +1,1736 @@
+{
+ "start": "2026-11-21T02:17:19.835Z",
+ "round": 1,
+ "idle": 0,
+ "errors": 0,
+ "status": "fail",
+ "history": [
+  {
+   "at": "2026-11-21T02:21:35.372Z",
+   "mode": "manual",
+   "status": "fail",
+   "fails": 49,
+   "round": 1,
+   "reused": false,
+   "stopHookActive": false
+  }
+ ],
+ "max": 3,
+ "marker": {
+  "page": null,
+  "url": "http://127.0.0.1:4173/",
+  "root": null,
+  "kind": "software",
+  "category": "校园问卷互助",
+  "primary": "进去看看",
+  "rounds": 3,
+  "start": "2026-11-21T02:17:19.835Z",
+  "by": "gate.mjs --start"
+ },
+ "manual": true,
+ "roundKey": "035b526e8dac4564:da39a3ee",
+ "roundFree": false,
+ "idleFree": false,
+ "blockKey": null,
+ "fp": "035b526e8dac4564",
+ "page": "http://127.0.0.1:4173/",
+ "found": {
+  "fails": [
+   {
+    "check": "nav",
+    "where": "(the first screen)",
+    "msg": "no nav bar across the top of the first screen (a header with the brand, the section links and the main action)",
+    "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency",
+    "ids": [
+     "nav"
+    ],
+    "wheres": [
+     "(the first screen)"
+    ]
+   },
+   {
+    "check": "no-visual",
+    "where": "main#main > div.board-layout > section \"发现问卷\"",
+    "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+    "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency",
+    "ids": [
+     "no-visual"
+    ],
+    "wheres": [
+     "main#main > div.board-layout > section \"发现问卷\""
+    ]
+   },
+   {
+    "check": "cta",
+    "where": "main#main > section.welcome.watercolor-welcome",
+    "msg": "the hero has no button (the nav's does not count)",
+    "fix": "add the action: a button in the hero, one on every priced item, one in the closing section",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency",
+    "ids": [
+     "cta"
+    ],
+    "wheres": [
+     "main#main > section.welcome.watercolor-welcome"
+    ]
+   },
+   {
+    "check": "cta",
+    "where": "main#main > div.board-layout > aside.sidebar \"让积分转起来\"",
+    "msg": "the last section before the footer ends with no button",
+    "fix": "add the action: a button in the hero, one on every priced item, one in the closing section",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency",
+    "ids": [
+     "cta"
+    ],
+    "wheres": [
+     "main#main > div.board-layout > aside.sidebar \"让积分转起来\""
+    ]
+   },
+   {
+    "check": "copy-fact",
+    "where": "h1#entry-title \"答别人的问卷， 换自己的样本。\"",
+    "msg": "the first screen holds no number, price, date, place, platform or genre",
+    "fix": "put one hard fact from the brief on the first screen: a number, a price, a date, the place, the platforms it runs on or a game's genre; take it from the brief or remove the claim",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "copy-fact"
+    ],
+    "wheres": [
+     "h1#entry-title \"答别人的问卷， 换自己的样本。\""
+    ]
+   },
+   {
+    "check": "tilt",
+    "where": "div#entry > div.entry-inner > div.entry-frag \"研究记录 / 01 每一份回答，都让研究更进一步。\"",
+    "msg": "rotated -4.0°",
+    "fix": "set it straight",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "tilt"
+    ],
+    "wheres": [
+     "div#entry > div.entry-inner > div.entry-frag \"研究记录 / 01 每一份回答，都让研究更进一步。\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "header.header > div.header-inner > a.brand \"问问问校园问卷互助\"",
+    "msg": "\"问问问校园问卷互助\" goes to #hall, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "header.header > div.header-inner > a.brand \"问问问校园问卷互助\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#desktop-nav > a:nth-of-type(1) \"问卷大厅\"",
+    "msg": "\"问卷大厅\" goes to #hall, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#desktop-nav > a:nth-of-type(1) \"问卷大厅\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#desktop-nav > a:nth-of-type(2) \"发布问卷\"",
+    "msg": "\"发布问卷\" goes to #publish, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#desktop-nav > a:nth-of-type(2) \"发布问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#desktop-nav > a:nth-of-type(3) \"我的任务\"",
+    "msg": "\"我的任务\" goes to #tasks, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#desktop-nav > a:nth-of-type(3) \"我的任务\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#desktop-nav > a:nth-of-type(4) \"积分中心\"",
+    "msg": "\"积分中心\" goes to #points, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#desktop-nav > a:nth-of-type(4) \"积分中心\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "main#main > section.wallet-inline > a.wallet-available.wallet-balance \"可用积分100 分\"",
+    "msg": "\"可用积分100 分\" goes to #points, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "main#main > section.wallet-inline > a.wallet-available.wallet-balance \"可用积分100 分\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "main#main > section.wallet-inline > a.btn.wallet-publish \"发布问卷\"",
+    "msg": "\"发布问卷\" goes to #publish, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "main#main > section.wallet-inline > a.btn.wallet-publish \"发布问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "section > div.filter-tools > nav.topic-chips > a:nth-of-type(1) \"全部\"",
+    "msg": "\"全部\" goes to #hall?, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "section > div.filter-tools > nav.topic-chips > a:nth-of-type(1) \"全部\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "section > div.filter-tools > nav.topic-chips > a:nth-of-type(2) \"校园生活\"",
+    "msg": "\"校园生活\" goes to #hall?topic=%E6%A0%A1%E5%9B%AD%E7%94%9F%E6%B4%BB, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "section > div.filter-tools > nav.topic-chips > a:nth-of-type(2) \"校园生活\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "section > div.filter-tools > nav.topic-chips > a:nth-of-type(3) \"学习研究\"",
+    "msg": "\"学习研究\" goes to #hall?topic=%E5%AD%A6%E4%B9%A0%E7%A0%94%E7%A9%B6, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "section > div.filter-tools > nav.topic-chips > a:nth-of-type(3) \"学习研究\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(1) > div.card-content > h3 > a \"早八前一晚，你通常几点睡\"",
+    "msg": "\"早八前一晚，你通常几点睡\" goes to #detail/sample-4, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(1) > div.card-content > h3 > a \"早八前一晚，你通常几点睡\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(1) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-4, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(1) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(2) > div.card-content > h3 > a \"校园咖啡，你为什么买这一杯\"",
+    "msg": "\"校园咖啡，你为什么买这一杯\" goes to #detail/sample-13, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(2) > div.card-content > h3 > a \"校园咖啡，你为什么买这一杯\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(2) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-13, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(2) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(3) > div.card-content > h3 > a \"食堂的哪一餐，最合你的胃口？\"",
+    "msg": "\"食堂的哪一餐，最合你的胃口？\" goes to #detail/sample-0, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(3) > div.card-content > h3 > a \"食堂的哪一餐，最合你的胃口？\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(3) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-0, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(3) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(4) > div.card-content > h3 > a \"图书馆里，你喜欢什么样的座位\"",
+    "msg": "\"图书馆里，你喜欢什么样的座位\" goes to #detail/sample-8, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(4) > div.card-content > h3 > a \"图书馆里，你喜欢什么样的座位\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(4) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-8, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(4) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(5) > div.card-content > h3 > a \"小组作业里，分工是怎么定的\"",
+    "msg": "\"小组作业里，分工是怎么定的\" goes to #detail/sample-12, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(5) > div.card-content > h3 > a \"小组作业里，分工是怎么定的\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(5) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-12, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(5) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(6) > div.card-content > h3 > a \"校园快递最后一公里体验\"",
+    "msg": "\"校园快递最后一公里体验\" goes to #detail/sample-6, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(6) > div.card-content > h3 > a \"校园快递最后一公里体验\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(6) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-6, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(6) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(7) > div.card-content > h3 > a \"选修课，你会如何做选择\"",
+    "msg": "\"选修课，你会如何做选择\" goes to #detail/sample-5, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(7) > div.card-content > h3 > a \"选修课，你会如何做选择\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(7) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-5, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(7) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(8) > div.card-content > h3 > a \"你的第一段实习，是怎么找到的\"",
+    "msg": "\"你的第一段实习，是怎么找到的\" goes to #detail/sample-2, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(8) > div.card-content > h3 > a \"你的第一段实习，是怎么找到的\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "article.survey-card.compact-card:nth-of-type(8) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+    "msg": "\"看看问卷\" goes to #detail/sample-2, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "article.survey-card.compact-card:nth-of-type(8) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#mobile-nav > a:nth-of-type(1) \"大厅\"",
+    "msg": "\"大厅\" goes to #hall, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#mobile-nav > a:nth-of-type(1) \"大厅\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#mobile-nav > a:nth-of-type(2) \"发布\"",
+    "msg": "\"发布\" goes to #publish, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#mobile-nav > a:nth-of-type(2) \"发布\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#mobile-nav > a:nth-of-type(3) \"我的任务\"",
+    "msg": "\"我的任务\" goes to #tasks, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#mobile-nav > a:nth-of-type(3) \"我的任务\""
+    ]
+   },
+   {
+    "check": "links",
+    "where": "nav#mobile-nav > a:nth-of-type(4) \"积分\"",
+    "msg": "\"积分\" goes to #points, which is not on this page",
+    "fix": "point every link at a real section, page or file",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "links"
+    ],
+    "wheres": [
+     "nav#mobile-nav > a:nth-of-type(4) \"积分\""
+    ]
+   },
+   {
+    "check": "empty-area",
+    "where": "main#main > section.welcome.watercolor-welcome",
+    "msg": "the section shows no content at all: 288px of ground",
+    "fix": "fill the section: a picture or a second column beside the words, or more of its own content; the section stays one or two screens tall (T-height)",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "empty-area"
+    ],
+    "wheres": [
+     "main#main > section.welcome.watercolor-welcome"
+    ]
+   },
+   {
+    "check": "empty-area",
+    "where": "main#main > div.board-layout",
+    "msg": "the section shows no content at all: 1457px of ground",
+    "fix": "fill the section: a picture or a second column beside the words, or more of its own content; the section stays one or two screens tall (T-height)",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency",
+    "ids": [
+     "empty-area"
+    ],
+    "wheres": [
+     "main#main > div.board-layout"
+    ]
+   },
+   {
+    "check": "moment-none",
+    "where": "(the page)",
+    "msg": "a software page (--type) deals no moment: every kind carries one, two on a long page (moments.md)",
+    "fix": "deal one (moments.mjs pick --page software) and mount it in its own section",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "moment-none"
+    ],
+    "wheres": [
+     "(the page)"
+    ]
+   },
+   {
+    "check": "hero-screen",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-1)",
+    "fix": "make the hero exactly one screen (height: 100svh) with its content between the nav and 24px above the fold",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "hero-screen"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "section-height",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-2)",
+    "fix": "set every section after the hero to one screen or two (height: calc(var(--h,1) * 100vh)) and fit its content above --padb",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "section-height"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "section-air",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-3)",
+    "fix": "keep 128-480px of air between sections (--padt, --padb), fill each section to 55% or merge it into the one above, and drop divider rules",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "section-air"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "one-section",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-4)",
+    "fix": "make each section exactly one or two screens so a screen shows one section; every block of <main> a <section>, no bands inside one",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "one-section"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "one-heading",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-5)",
+    "fix": "give each section one h2, first in its .wrap, and the hero only its h1, so headings sit a screen apart",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "one-heading"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "container-edges",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-6)",
+    "fix": "put everything on one .wrap: the same margin left and right (64-120px, 16-24px on a phone), text on its left line or the one split line",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "container-edges"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "row-lines",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-7)",
+    "fix": "start a row's first item on the container's left line and end its last on the right line, all one height, nothing scrolling sideways",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "row-lines"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "split-pair",
+    "where": "body",
+    "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-8)",
+    "fix": "top-align every split, text left and visual right, the right column on one shared line, edge to edge on the container",
+    "widths": [
+     1440
+    ],
+    "from": "consistency",
+    "ids": [
+     "split-pair"
+    ],
+    "wheres": [
+     "body"
+    ]
+   },
+   {
+    "check": "text-only",
+    "where": "main#main > div.board-layout > aside.sidebar \"让积分转起来\"",
+    "msg": "the closing section is only text: no picture, icon, mock or effect in it",
+    "fix": "give the section a visual: a photograph that fits, the real icons, or a UI fragment on a ground",
+    "widths": [
+     390
+    ],
+    "from": "consistency",
+    "ids": [
+     "text-only"
+    ],
+    "wheres": [
+     "main#main > div.board-layout > aside.sidebar \"让积分转起来\""
+    ]
+   },
+   {
+    "check": "container",
+    "where": "page",
+    "msg": "no .wrap",
+    "fix": "put the content in one .wrap",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "layout",
+    "ids": [
+     "container"
+    ],
+    "wheres": [
+     "page"
+    ]
+   }
+  ],
+  "warns": [
+   {
+    "check": "cta",
+    "where": "main#main > div.board-layout > section \"发现问卷\"",
+    "msg": "a section over 1.5 screens long with no link or button in it",
+    "fix": "add the action: a button in the hero, one on every priced item, one in the closing section",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "cta",
+    "where": "main#main > div.board-layout > aside.sidebar \"让积分转起来\"",
+    "msg": "a section over 1.5 screens long with no link or button in it",
+    "fix": "add the action: a button in the hero, one on every priced item, one in the closing section",
+    "widths": [
+     1440
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "copy-headline",
+    "where": "h1#entry-title \"答别人的问卷， 换自己的样本。\"",
+    "msg": "\"答别人的问卷， 换自己的样本。\": no category known to check it against (pass --category, or write the <title> as \"Name: what it is for whom\")",
+    "fix": "put the category noun in the h1 (and who it is for, or where), in 2 to 8 words",
+    "widths": [
+     1440
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "copy-actions",
+    "where": "(the page)",
+    "msg": "the main action \"进去看看\" does not read word for word the same in the closing section",
+    "fix": "few actions, one wording: at most 2 in the hero, the main action word for word in nav, hero and close",
+    "widths": [
+     1440
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "heading-scale",
+    "where": "(the page)",
+    "msg": "the page has no visible h1",
+    "fix": "size headings by level: the h1 largest, one size per level, each level below the one above",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "section-tile",
+    "where": "main#main > section.welcome.watercolor-welcome \"让互助在校园里流动。\"",
+    "msg": "the header and the first section fill 424px (0.47 screens at 1440x900; the section is 288px), shorter than the screen: the first screen shows 288px of it and only 302px of a section further down's ground (\"发现问卷\"), none of its content",
+    "fix": "make the hero exactly one screen (height: 100svh) with its content between the nav and 24px above the fold",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "section-tile",
+    "where": "main#main > section.wallet-inline \"可用积分100 分冻结0 分发布问卷\"",
+    "msg": "the section is 118px tall (0.13 screens at 1440x900), shorter than the screen: its tile (the screen from its top) shows 118px of it and only 750px of the next section's ground (\"发现问卷\"), none of its content",
+    "fix": "set every section after the hero to one screen or two (height: calc(var(--h,1) * 100vh)) and fit its content above --padb",
+    "widths": [
+     1440,
+     390
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "skip-link",
+    "where": "button#entry-alt \"换个身份\"",
+    "msg": "the first Tab stop is \"换个身份\", not a skip link: a keyboard user tabs through the whole nav on every visit",
+    "fix": "add the starter's skip link as the header's first child: <a class=\"skip-link\" href=\"#top\">Skip to content</a>",
+    "widths": [
+     1440
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "share-meta",
+    "where": "head",
+    "msg": "the head lacks og:title, og:description, og:image, twitter:card: a shared link shows no picture or title of its own",
+    "fix": "copy the head block of starter.html: og tags, twitter:card, the icon and theme-color (references/system.md, Head)",
+    "widths": [
+     1440
+    ],
+    "from": "consistency"
+   },
+   {
+    "check": "copy-stat-strip",
+    "msg": "stat strip x1",
+    "fix": "a strip only of figures the brief gives (a price, hours, a count); otherwise put each number in the sentence it proves, or leave it out (references/copy-tells.md)",
+    "widths": [],
+    "from": "copy",
+    "where": "copy x1: \"100 / 0 / +5 / +5 / +...\"",
+    "exact": false
+   }
+  ],
+  "crashed": [],
+  "seconds": {
+   "consistency": 68,
+   "layout": 12
+  }
+ },
+ "open": [
+  {
+   "check": "nav",
+   "where": "(the first screen)",
+   "msg": "no nav bar across the top of the first screen (a header with the brand, the section links and the main action)",
+   "fix": "make the nav one bar from the content's left edge to its right edge, with every link and action inside it",
+   "widths": [
+    1440,
+    390
+   ],
+   "from": "consistency",
+   "ids": [
+    "nav"
+   ],
+   "wheres": [
+    "(the first screen)"
+   ]
+  },
+  {
+   "check": "no-visual",
+   "where": "main#main > div.board-layout > section \"发现问卷\"",
+   "msg": "no picture, effect or mock in this section; a feature section needs a visual",
+   "fix": "give the section a visual: a UI fragment on a ground, real icons, or a photograph that fits",
+   "widths": [
+    1440,
+    390
+   ],
+   "from": "consistency",
+   "ids": [
+    "no-visual"
+   ],
+   "wheres": [
+    "main#main > div.board-layout > section \"发现问卷\""
+   ]
+  },
+  {
+   "check": "cta",
+   "where": "main#main > section.welcome.watercolor-welcome",
+   "msg": "the hero has no button (the nav's does not count)",
+   "fix": "add the action: a button in the hero, one on every priced item, one in the closing section",
+   "widths": [
+    1440,
+    390
+   ],
+   "from": "consistency",
+   "ids": [
+    "cta"
+   ],
+   "wheres": [
+    "main#main > section.welcome.watercolor-welcome"
+   ]
+  },
+  {
+   "check": "cta",
+   "where": "main#main > div.board-layout > aside.sidebar \"让积分转起来\"",
+   "msg": "the last section before the footer ends with no button",
+   "fix": "add the action: a button in the hero, one on every priced item, one in the closing section",
+   "widths": [
+    1440,
+    390
+   ],
+   "from": "consistency",
+   "ids": [
+    "cta"
+   ],
+   "wheres": [
+    "main#main > div.board-layout > aside.sidebar \"让积分转起来\""
+   ]
+  },
+  {
+   "check": "copy-fact",
+   "where": "h1#entry-title \"答别人的问卷， 换自己的样本。\"",
+   "msg": "the first screen holds no number, price, date, place, platform or genre",
+   "fix": "put one hard fact from the brief on the first screen: a number, a price, a date, the place, the platforms it runs on or a game's genre; take it from the brief or remove the claim",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "copy-fact"
+   ],
+   "wheres": [
+    "h1#entry-title \"答别人的问卷， 换自己的样本。\""
+   ]
+  },
+  {
+   "check": "tilt",
+   "where": "div#entry > div.entry-inner > div.entry-frag \"研究记录 / 01 每一份回答，都让研究更进一步。\"",
+   "msg": "rotated -4.0°",
+   "fix": "set it straight",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "tilt"
+   ],
+   "wheres": [
+    "div#entry > div.entry-inner > div.entry-frag \"研究记录 / 01 每一份回答，都让研究更进一步。\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "header.header > div.header-inner > a.brand \"问问问校园问卷互助\"",
+   "msg": "\"问问问校园问卷互助\" goes to #hall, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "header.header > div.header-inner > a.brand \"问问问校园问卷互助\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#desktop-nav > a:nth-of-type(1) \"问卷大厅\"",
+   "msg": "\"问卷大厅\" goes to #hall, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#desktop-nav > a:nth-of-type(1) \"问卷大厅\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#desktop-nav > a:nth-of-type(2) \"发布问卷\"",
+   "msg": "\"发布问卷\" goes to #publish, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#desktop-nav > a:nth-of-type(2) \"发布问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#desktop-nav > a:nth-of-type(3) \"我的任务\"",
+   "msg": "\"我的任务\" goes to #tasks, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#desktop-nav > a:nth-of-type(3) \"我的任务\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#desktop-nav > a:nth-of-type(4) \"积分中心\"",
+   "msg": "\"积分中心\" goes to #points, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#desktop-nav > a:nth-of-type(4) \"积分中心\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "main#main > section.wallet-inline > a.wallet-available.wallet-balance \"可用积分100 分\"",
+   "msg": "\"可用积分100 分\" goes to #points, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "main#main > section.wallet-inline > a.wallet-available.wallet-balance \"可用积分100 分\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "main#main > section.wallet-inline > a.btn.wallet-publish \"发布问卷\"",
+   "msg": "\"发布问卷\" goes to #publish, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "main#main > section.wallet-inline > a.btn.wallet-publish \"发布问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "section > div.filter-tools > nav.topic-chips > a:nth-of-type(1) \"全部\"",
+   "msg": "\"全部\" goes to #hall?, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "section > div.filter-tools > nav.topic-chips > a:nth-of-type(1) \"全部\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "section > div.filter-tools > nav.topic-chips > a:nth-of-type(2) \"校园生活\"",
+   "msg": "\"校园生活\" goes to #hall?topic=%E6%A0%A1%E5%9B%AD%E7%94%9F%E6%B4%BB, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "section > div.filter-tools > nav.topic-chips > a:nth-of-type(2) \"校园生活\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "section > div.filter-tools > nav.topic-chips > a:nth-of-type(3) \"学习研究\"",
+   "msg": "\"学习研究\" goes to #hall?topic=%E5%AD%A6%E4%B9%A0%E7%A0%94%E7%A9%B6, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "section > div.filter-tools > nav.topic-chips > a:nth-of-type(3) \"学习研究\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(1) > div.card-content > h3 > a \"早八前一晚，你通常几点睡\"",
+   "msg": "\"早八前一晚，你通常几点睡\" goes to #detail/sample-4, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(1) > div.card-content > h3 > a \"早八前一晚，你通常几点睡\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(1) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-4, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(1) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(2) > div.card-content > h3 > a \"校园咖啡，你为什么买这一杯\"",
+   "msg": "\"校园咖啡，你为什么买这一杯\" goes to #detail/sample-13, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(2) > div.card-content > h3 > a \"校园咖啡，你为什么买这一杯\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(2) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-13, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(2) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(3) > div.card-content > h3 > a \"食堂的哪一餐，最合你的胃口？\"",
+   "msg": "\"食堂的哪一餐，最合你的胃口？\" goes to #detail/sample-0, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(3) > div.card-content > h3 > a \"食堂的哪一餐，最合你的胃口？\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(3) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-0, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(3) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(4) > div.card-content > h3 > a \"图书馆里，你喜欢什么样的座位\"",
+   "msg": "\"图书馆里，你喜欢什么样的座位\" goes to #detail/sample-8, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(4) > div.card-content > h3 > a \"图书馆里，你喜欢什么样的座位\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(4) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-8, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(4) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(5) > div.card-content > h3 > a \"小组作业里，分工是怎么定的\"",
+   "msg": "\"小组作业里，分工是怎么定的\" goes to #detail/sample-12, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(5) > div.card-content > h3 > a \"小组作业里，分工是怎么定的\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(5) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-12, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(5) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(6) > div.card-content > h3 > a \"校园快递最后一公里体验\"",
+   "msg": "\"校园快递最后一公里体验\" goes to #detail/sample-6, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(6) > div.card-content > h3 > a \"校园快递最后一公里体验\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(6) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-6, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(6) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(7) > div.card-content > h3 > a \"选修课，你会如何做选择\"",
+   "msg": "\"选修课，你会如何做选择\" goes to #detail/sample-5, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(7) > div.card-content > h3 > a \"选修课，你会如何做选择\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(7) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-5, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(7) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(8) > div.card-content > h3 > a \"你的第一段实习，是怎么找到的\"",
+   "msg": "\"你的第一段实习，是怎么找到的\" goes to #detail/sample-2, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(8) > div.card-content > h3 > a \"你的第一段实习，是怎么找到的\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "article.survey-card.compact-card:nth-of-type(8) > div.card-content > div.card-bottom > a.card-link \"看看问卷\"",
+   "msg": "\"看看问卷\" goes to #detail/sample-2, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "article.survey-card.compact-card:nth-of-type(8) > div.card-content > div.card-bottom > a.card-link \"看看问卷\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#mobile-nav > a:nth-of-type(1) \"大厅\"",
+   "msg": "\"大厅\" goes to #hall, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#mobile-nav > a:nth-of-type(1) \"大厅\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#mobile-nav > a:nth-of-type(2) \"发布\"",
+   "msg": "\"发布\" goes to #publish, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#mobile-nav > a:nth-of-type(2) \"发布\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#mobile-nav > a:nth-of-type(3) \"我的任务\"",
+   "msg": "\"我的任务\" goes to #tasks, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#mobile-nav > a:nth-of-type(3) \"我的任务\""
+   ]
+  },
+  {
+   "check": "links",
+   "where": "nav#mobile-nav > a:nth-of-type(4) \"积分\"",
+   "msg": "\"积分\" goes to #points, which is not on this page",
+   "fix": "point every link at a real section, page or file",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "links"
+   ],
+   "wheres": [
+    "nav#mobile-nav > a:nth-of-type(4) \"积分\""
+   ]
+  },
+  {
+   "check": "empty-area",
+   "where": "main#main > section.welcome.watercolor-welcome",
+   "msg": "the section shows no content at all: 288px of ground",
+   "fix": "fill the section: a picture or a second column beside the words, or more of its own content; the section stays one or two screens tall (T-height)",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "empty-area"
+   ],
+   "wheres": [
+    "main#main > section.welcome.watercolor-welcome"
+   ]
+  },
+  {
+   "check": "empty-area",
+   "where": "main#main > div.board-layout",
+   "msg": "the section shows no content at all: 1457px of ground",
+   "fix": "fill the section: a picture or a second column beside the words, or more of its own content; the section stays one or two screens tall (T-height)",
+   "widths": [
+    1440,
+    390
+   ],
+   "from": "consistency",
+   "ids": [
+    "empty-area"
+   ],
+   "wheres": [
+    "main#main > div.board-layout"
+   ]
+  },
+  {
+   "check": "moment-none",
+   "where": "(the page)",
+   "msg": "a software page (--type) deals no moment: every kind carries one, two on a long page (moments.md)",
+   "fix": "deal one (moments.mjs pick --page software) and mount it in its own section",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "moment-none"
+   ],
+   "wheres": [
+    "(the page)"
+   ]
+  },
+  {
+   "check": "hero-screen",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-1)",
+   "fix": "make the hero exactly one screen (height: 100svh) with its content between the nav and 24px above the fold",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "hero-screen"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "section-height",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-2)",
+   "fix": "set every section after the hero to one screen or two (height: calc(var(--h,1) * 100vh)) and fit its content above --padb",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "section-height"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "section-air",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-3)",
+   "fix": "keep 128-480px of air between sections (--padt, --padb), fill each section to 55% or merge it into the one above, and drop divider rules",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "section-air"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "one-section",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-4)",
+   "fix": "make each section exactly one or two screens so a screen shows one section; every block of <main> a <section>, no bands inside one",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "one-section"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "one-heading",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-5)",
+   "fix": "give each section one h2, first in its .wrap, and the hero only its h1, so headings sit a screen apart",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "one-heading"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "container-edges",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-6)",
+   "fix": "put everything on one .wrap: the same margin left and right (64-120px, 16-24px on a phone), text on its left line or the one split line",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "container-edges"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "row-lines",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-7)",
+   "fix": "start a row's first item on the container's left line and end its last on the right line, all one height, nothing scrolling sideways",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "row-lines"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "split-pair",
+   "where": "body",
+   "msg": "no sections found: nothing in <main>, or at the top of the page, to measure (SR-8)",
+   "fix": "top-align every split, text left and visual right, the right column on one shared line, edge to edge on the container",
+   "widths": [
+    1440
+   ],
+   "from": "consistency",
+   "ids": [
+    "split-pair"
+   ],
+   "wheres": [
+    "body"
+   ]
+  },
+  {
+   "check": "text-only",
+   "where": "main#main > div.board-layout > aside.sidebar \"让积分转起来\"",
+   "msg": "the closing section is only text: no picture, icon, mock or effect in it",
+   "fix": "give the section a visual: a photograph that fits, the real icons, or a UI fragment on a ground",
+   "widths": [
+    390
+   ],
+   "from": "consistency",
+   "ids": [
+    "text-only"
+   ],
+   "wheres": [
+    "main#main > div.board-layout > aside.sidebar \"让积分转起来\""
+   ]
+  },
+  {
+   "check": "container",
+   "where": "page",
+   "msg": "no .wrap",
+   "fix": "put the content in one .wrap",
+   "widths": [
+    1440,
+    390
+   ],
+   "from": "layout",
+   "ids": [
+    "container"
+   ],
+   "wheres": [
+    "page"
+   ]
+  }
+ ],
+ "waived": [],
+ "warnCount": 10,
+ "at": "2026-11-21T02:21:35.372Z"
+}

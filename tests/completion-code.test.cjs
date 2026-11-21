@@ -41,7 +41,7 @@ test('first mismatching completion code enters correction, reserves reward, paus
   f.reject(id, '码对不上');
   assert.equal(M.sub(f.state, id).status, 'correction');
   assert.equal(M.sub(f.state, id).correctionUsed, 1);
-  assert.equal(M.task(f.state, taskId).escrow, 30);
+  assert.equal(M.task(f.state, taskId).escrow, M.toUnits(30));
   assert.equal(M.remaining(f.state, M.task(f.state, taskId)), 2);
   f.apply({ type: 'advance', hours: 49 });
   assert.equal(M.sub(f.state, id).status, 'correction');
@@ -85,7 +85,7 @@ test('a second code mismatch follows refusal and appeal safeguards, with no seco
   assert.equal(M.sub(f.state, id).status, 'rejected');
   assert.equal(M.sub(f.state, id).correctionUsed, 1);
   assert.equal(M.sub(f.state, id).final, false);
-  assert.equal(M.task(f.state, taskId).escrow, 20);
+  assert.equal(M.task(f.state, taskId).escrow, M.toUnits(20));
   assert.equal(M.remaining(f.state, M.task(f.state, taskId)), 1);
   f.as('u3'); const before = M.clone(f.state);
   assert.throws(() => f.correct(id));
@@ -110,8 +110,8 @@ test('batch review may approve unverified clean submissions, transfers each rewa
   const f = fixture(), taskId = f.publish(), a = f.claim(taskId, 'u2'), b = f.claim(taskId, 'u3');
   f.as('u1'); f.apply({ type: 'approveAll', taskId });
   assert.equal(M.sub(f.state, a).status, 'approved'); assert.equal(M.sub(f.state, b).status, 'approved');
-  assert.equal(M.user(f.state, 'u2').available, 110); assert.equal(M.user(f.state, 'u3').available, 110);
-  assert.equal(M.task(f.state, taskId).escrow, 10);
+  assert.equal(M.user(f.state, 'u2').available, M.toUnits(110)); assert.equal(M.user(f.state, 'u3').available, M.toUnits(110));
+  assert.equal(M.task(f.state, taskId).escrow, M.toUnits(10));
   const before = M.clone(f.state);
   assert.throws(() => f.apply({ type: 'approveAll', taskId }));
   assert.deepEqual(f.state, before); M.assertState(f.state);
@@ -180,7 +180,7 @@ test('a corrected first submission can be genuinely rejected for a second mismat
   f.reject(id, '码对不上'); f.correct(id); f.reject(id, '码对不上');
   const x = M.sub(f.state, id);
   assert.equal(x.status, 'rejected'); assert.equal(x.correctionUsed, 1);
-  assert.equal(x.final, false); assert.equal(M.task(f.state, taskId).escrow, 10);
+  assert.equal(x.final, false); assert.equal(M.task(f.state, taskId).escrow, M.toUnits(10));
   assert.ok(!M.user(f.state, 'u2').claimRestrictedUntil);
   f.as('u2'); assert.throws(() => f.apply({ type: 'correctCode', submissionId: id, note: '再次补正' }));
   f.apply({ type: 'appeal', submissionId: id, reason: '请求人工复核' });
@@ -194,5 +194,5 @@ test('verified code permits first dirty-data refusal and increments only the act
   assert.equal(M.sub(f.state, id).status, 'rejected');
   assert.equal(M.user(f.state, 'u2').violations, offenderBefore + 1);
   assert.equal(M.user(f.state, 'u1').violations, publisherBefore);
-  assert.equal(M.task(f.state, taskId).escrow, 10); M.assertState(f.state);
+  assert.equal(M.task(f.state, taskId).escrow, M.toUnits(10)); M.assertState(f.state);
 });

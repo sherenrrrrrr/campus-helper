@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="问问校园问卷互助：回答问卷赚积分，用积分发布自己的问卷。本地演示原型。">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="theme-color" content="#EEF2F5">
+  <meta name="theme-color" content="#edf3f5">
+  <script>
+    try { document.documentElement.dataset.theme = localStorage.getItem('campus-helper-theme') === 'dark' ? 'dark' : 'light'; }
+    catch (_) { document.documentElement.dataset.theme = 'light'; }
+  </script>
   <meta name="page-type" content="software">
   <meta name="site-kind" content="software">
   <title>问问 · 校园问卷互助</title>
@@ -14,11 +18,34 @@
 </head>
 <body>
   <a class="skip" href="#main">跳到主要内容</a>
+  <div class="entry" id="entry" hidden>
+    <div class="entry-inner">
+      <div class="entry-frag" aria-hidden="true">
+        <span class="entry-frag-label">研究记录 / 01</span>
+        <div class="entry-checks"><span class="entry-box"></span><span class="entry-box entry-box--on"></span><span class="entry-box"></span></div>
+        <span class="entry-rule"></span><span class="entry-rule entry-rule--short"></span>
+        <span class="entry-scale"><i></i><i></i><i class="on"></i><i></i><i></i></span>
+        <span class="entry-frag-caption">每一份回答，都让研究更进一步。</span>
+      </div>
+      <section class="entry-panel glass-panel" role="dialog" aria-modal="true" aria-labelledby="entry-title" aria-describedby="entry-fine">
+        <button type="button" class="theme-toggle entry-theme" aria-label="切换夜间模式">夜间模式</button>
+        <p class="entry-brand">问问<span>校园问卷互助</span></p>
+        <h1 class="entry-title" id="entry-title"><span class="entry-title-line">答别人的问卷，</span><span class="entry-title-line">换自己的样本。</span></h1>
+        <p class="entry-note">从一份回答开始，让校园研究相互支持。<br>大厅已备好 16 份示例问卷，供你体验完整流程。</p>
+        <div class="entry-actions">
+          <button type="button" class="btn entry-enter" id="entry-enter">进去看看</button>
+          <button type="button" class="entry-alt" id="entry-alt" data-action="account">换个身份</button>
+        </div>
+        <p class="entry-identity" id="entry-identity">默认以小林的演示身份进入</p>
+        <p class="entry-fine" id="entry-fine">演示环境，无需密码。数据只存在这台电脑。</p>
+      </section>
+    </div>
+  </div>
   <div class="demo-banner"><span>演示环境</span> 示例账号与积分，仅保存在当前浏览器 <button type="button" data-action="guide">查看演示指南</button></div>
   <header class="header"><div class="header-inner">
     <a href="#hall" class="brand" aria-label="问问，回到问卷大厅"><span class="brand-mark">问</span><span>问问<small>校园问卷互助</small></span></a>
     <nav class="desktop-nav" aria-label="主导航" id="desktop-nav"></nav>
-    <div class="account-area"><button type="button" class="notice-toggle icon-button" data-action="notices" aria-label="查看通知" id="notice-toggle"></button><div class="account-wrap"><button type="button" id="account-toggle" class="account-toggle" data-action="account" aria-expanded="false"></button><div id="account-menu" class="account-menu" hidden></div></div></div>
+    <div class="account-area"><button type="button" class="theme-toggle" aria-label="切换夜间模式">夜间模式</button><button type="button" class="notice-toggle icon-button" data-action="notices" aria-label="查看通知" id="notice-toggle"></button><div class="account-wrap"><button type="button" id="account-toggle" class="account-toggle" data-action="account" aria-expanded="false"></button><div id="account-menu" class="account-menu" hidden></div></div></div>
   </div></header>
   <div id="storage-warning" class="storage-warning" role="status" hidden></div>
   <main id="main" tabindex="-1"></main>
@@ -31,5 +58,83 @@
   <script src="data/seed.js"></script>
   <script src="admin.js"></script>
   <script src="app.js"></script>
+  <script>
+  (function () {
+    var entry = document.getElementById('entry');
+    var enter = document.getElementById('entry-enter');
+    var alternate = document.getElementById('entry-alt');
+    var key = 'campus-helper-entry';
+    function syncTheme() {
+      var dark = document.documentElement.dataset.theme === 'dark';
+      document.querySelectorAll('.theme-toggle').forEach(function (button) {
+        button.textContent = dark ? '日间模式' : '夜间模式';
+        button.setAttribute('aria-label', dark ? '切换日间模式' : '切换夜间模式');
+        button.setAttribute('aria-pressed', String(dark));
+      });
+      document.querySelector('meta[name="theme-color"]').content = dark ? '#101823' : '#edf3f5';
+    }
+    document.querySelectorAll('.theme-toggle').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('campus-helper-theme', next); } catch (_) {}
+        syncTheme();
+      });
+    });
+    syncTheme();
+    var background = [];
+    function remembered() { try { return localStorage.getItem(key) === 'done'; } catch (_) { return false; } }
+    function showEntry() {
+      if (!entry.hidden) return;
+      background = Array.from(document.body.children).filter(function (el) {
+        return el !== entry && !['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName);
+      }).map(function (el) { var previous = el.inert; el.inert = true; return [el, previous]; });
+      var name = document.querySelector('#account-toggle .avatar');
+      var label = name && name.nextSibling ? name.nextSibling.textContent.trim() : '小林';
+      document.getElementById('entry-identity').textContent = '以' + label + '的演示身份进入，也可以换个身份';
+      entry.hidden = false;
+      document.body.classList.add('entry-open');
+      enter.focus({ preventScroll: true });
+    }
+    function closeEntry(event) {
+      try { localStorage.setItem(key, 'done'); } catch (_) { /* Temporary mode still permits entry. */ }
+      entry.hidden = true;
+      document.body.classList.remove('entry-open');
+      background.forEach(function (item) { item[0].inert = item[1]; });
+      background = [];
+      var target = event.currentTarget === alternate ? document.getElementById('account-toggle') : document.getElementById('main');
+      target.focus({ preventScroll: true });
+      // The alternate's original data-action event opens the existing menu as it bubbles.
+    }
+    enter.addEventListener('click', closeEntry);
+    alternate.addEventListener('click', closeEntry);
+    entry.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); }
+      if (event.key === 'Tab') {
+        if (event.shiftKey && document.activeElement === entry.querySelector('button')) { event.preventDefault(); alternate.focus(); }
+        else if (!event.shiftKey && document.activeElement === alternate) { event.preventDefault(); entry.querySelector('button').focus(); }
+      }
+    });
+    var letterIndex = 0;
+    entry.querySelectorAll('.entry-title-line').forEach(function (line) {
+      var text = line.textContent;
+      line.textContent = '';
+      Array.from(text).forEach(function (letter) {
+        var span = document.createElement('span');
+        span.textContent = letter;
+        span.style.setProperty('--letter-delay', Math.min(letterIndex++, 11) * 40 + 'ms');
+        line.appendChild(span);
+      });
+    });
+    document.addEventListener('submit', function (event) {
+      if (event.target.dataset.dialogForm !== 'reset') return;
+      // app.js handles the same event first; a closed dialog means reset succeeded.
+      if (document.getElementById('dialog').open) return;
+      try { localStorage.removeItem(key); } catch (_) {}
+      requestAnimationFrame(showEntry);
+    });
+    if (!remembered()) showEntry();
+  })();
+  </script>
 </body>
 </html>

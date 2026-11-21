@@ -55,3 +55,13 @@ localStorage 使用 `campus-helper-demo` key。截图压缩成本地缩略图，
 已按方案 3 完成电脑和手机布局：雾蓝灰背景、深蓝操作、金色积分，配合依据苏州校区照片创作的校园水彩插画。电脑使用双列任务与侧栏，手机使用单列图文卡片和底部导航。原有积分模型与示例数据文件保持不变。
 
 `node --test tests/model.test.cjs tests/build.test.cjs`：19 项通过。`node scripts/build.cjs` 生成约 698 KB 的 `outputs/campus-helper-demo.html`，包含内嵌图片，可直接离线打开。最新界面截图和验收记录位于 `outputs/watercolor-release/`；此前 Claude 交接压缩包仍是旧快照。
+
+# 入口与磨砂玻璃更新
+
+新增首次入口、演示身份选择、深墨蓝暖纸玻璃视觉和八种问卷图形。重置后重新显示入口；未增加真实认证或后端。背景继续使用现有校园水彩插画。单文件已重新构建，详细验证及设计检查限制见 `outputs/glass-release/verification.md`。
+
+可选浏览器验收：设置 `PLAYWRIGHT_MODULE` 为本地 Playwright 包路径，运行 `node tests/entry-browser.cjs` 和 `node tests/browser-smoke.cjs`；需安装 Chrome，预览服务运行在 4173 端口。
+
+# 发布规则与审核导航修复
+
+招募上限200份，天数可填1～60，标题1～60字，奖励可保留一位小数。新建或重置的示例数据含3000分的研究者账号。旧浏览器数据自动迁移为整数最小单位，保留原显示余额与任务；不会静默追加研究者。管理员从任务管理查看提交时，导航及返回位置保持后台上下文。小数、迁移和大样本的模型与浏览器回归见 `tests/model.test.cjs`、`tests/bugfix-browser.cjs`。

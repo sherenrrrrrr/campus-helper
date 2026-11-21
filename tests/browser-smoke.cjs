@@ -20,10 +20,11 @@ async function run() {
         }
         await click('account'); await page.locator(`[data-action="switch"][data-id="${id}"]`).click();
       };
-      const goto = async hash => { await page.goto(base + '/#' + hash); await page.waitForSelector('#main h1'); };
+      const goto = async hash => { await page.goto(base + '/#' + hash); await page.waitForSelector('#main h1', { state: 'attached' }); };
       const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('campus-helper-demo')));
       const submitDialog = () => page.locator('dialog form button[type="submit"]').click();
       await goto('hall');
+      await page.locator('#entry-enter').click();
       assert.equal(await page.locator('.survey-card').count(), 8);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(root, 'outputs', mobile ? 'mobile-preview.png' : 'desktop-preview.png'), fullPage: true });
@@ -41,19 +42,19 @@ async function run() {
         throw error;
       });
       let s = await read(), taskId = s.tasks.at(-1).id;
-      assert.equal(M.user(s, 'u1').available, 20); assert.equal(M.user(s, 'u1').frozen, 80);
+      assert.equal(M.user(s, 'u1').available, M.toUnits(20)); assert.equal(M.user(s, 'u1').frozen, M.toUnits(80));
       await goto('publish'); await page.locator('[name="quota"]').fill('20'); assert.equal(await page.getByRole('button', { name: '确认发布问卷' }).isDisabled(), true);
       await switchTo('u2'); await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim');
       await click('open-survey'); await page.getByRole('heading', { name: '示例问卷页面', exact: true }).waitFor();
       await page.locator('dialog [data-action="proof"]').click(); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
       s = await read(); const submissionId = s.submissions.at(-1).id; assert.equal(M.sub(s, submissionId).status, 'pending');
-      await page.reload(); await page.waitForSelector('h1'); assert.equal(await page.locator('[data-action="claim"]').count(), 0);
+      await page.reload(); await page.waitForSelector('#main h1'); assert.equal(await page.locator('[data-action="claim"]').count(), 0);
       await switchTo('u1'); await goto('tasks'); await page.getByText('1 份待审核', { exact: true }).waitFor();
       await goto('review/' + taskId); await click('reject'); await submitDialog(); assert.equal(await page.locator('dialog').evaluate(d => d.open), true);
       await page.locator('dialog [name="reason"]').selectOption('截图不清晰'); await submitDialog();
       s = await read(); assert.equal(M.sub(s, submissionId).status, 'appealed');
       await switchTo('u3'); await goto('admin/appeal/' + submissionId); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('完成提示清楚，裁决发放'); await submitDialog();
-      s = await read(); assert.equal(M.user(s, 'u2').available, 110); assert.equal(M.user(s, 'u1').frozen, 70); M.assertState(s);
+      s = await read(); assert.equal(M.user(s, 'u2').available, M.toUnits(110)); assert.equal(M.user(s, 'u1').frozen, M.toUnits(70)); M.assertState(s);
       // Second responder can be rejected normally, appeal, then receive a reasoned ruling.
       await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await click('proof'); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
       const secondId = (await read()).submissions.at(-1).id;
@@ -84,13 +85,14 @@ async function run() {
       const autoId = (await read()).submissions.at(-1).id;
       await click('account'); await click('time'); await page.locator('dialog [name="hours"]').selectOption('49'); await submitDialog();
       s = await read(); assert.equal(M.sub(s, autoId).automatic, true); M.assertState(s);
-      await click('account'); await click('reset'); await submitDialog(); s = await read(); assert.equal(M.user(s, 'u1').available, 100); assert.equal(s.tasks.length, 16);
+      await click('account'); await click('reset'); await submitDialog(); s = await read(); assert.equal(M.user(s, 'u1').available, M.toUnits(100)); assert.equal(s.tasks.length, 16);
       assert.deepEqual(errors, []); console.log(`${mobile ? '390px mobile' : '1440px desktop'}: full workflow, routes, persistence, reset and no page errors passed`);
       await context.close();
     }
     const context = await browser.newContext(), page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(pathToFileURL(path.join(root, 'outputs/campus-helper-demo.html')).href);
+    await page.locator('#entry-enter').click();
     await page.getByRole('heading', { name: '发现问卷' }).waitFor(); assert.equal(await page.locator('.survey-card').count(), 8); assert.deepEqual(errors, []);
     console.log('Standalone file:// artifact opens without network or runtime dependencies'); await context.close();
   } finally { await browser.close(); }
