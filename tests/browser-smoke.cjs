@@ -15,10 +15,11 @@ async function run() {
       page.on('pageerror', error => errors.push(error.message));
       const click = action => page.locator(`[data-action="${action}"]`).filter({ visible: true }).first().click();
       const switchTo = async id => { await click('account'); await page.locator(`[data-action="switch"][data-id="${id}"]`).click(); };
-      const goto = async hash => { await page.goto(base + '/#' + hash); await page.waitForSelector('#main h1'); };
+      const goto = async hash => { await page.goto(base + '/#' + hash); await page.waitForSelector('#main h1', { state: 'attached' }); };
       const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('campus-helper-demo')));
       const submitDialog = () => page.locator('dialog form button[type="submit"]').click();
       await goto('hall');
+      await page.locator('#entry-enter').click();
       assert.equal(await page.locator('.survey-card').count(), 8);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(root, 'outputs', mobile ? 'mobile-preview.png' : 'desktop-preview.png'), fullPage: true });
@@ -42,7 +43,7 @@ async function run() {
       await page.locator('dialog [data-action="open-survey"]').click(); await page.getByRole('heading', { name: '示例问卷页面', exact: true }).waitFor();
       await page.locator('dialog [data-action="proof"]').click(); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
       s = await read(); const submissionId = s.submissions.at(-1).id; assert.equal(M.sub(s, submissionId).status, 'pending');
-      await page.reload(); await page.waitForSelector('h1'); assert.equal(await page.locator('[data-action="claim"]').count(), 0);
+      await page.reload(); await page.waitForSelector('#main h1'); assert.equal(await page.locator('[data-action="claim"]').count(), 0);
       await switchTo('u1'); await goto('tasks'); await page.getByText('1 份待审核', { exact: true }).waitFor();
       await goto('review/' + taskId); await click('reject'); await submitDialog(); assert.equal(await page.locator('dialog').evaluate(d => d.open), true);
       await page.locator('dialog [name="reason"]').selectOption('截图不清晰'); await submitDialog();
@@ -75,6 +76,7 @@ async function run() {
     const context = await browser.newContext(), page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(pathToFileURL(path.join(root, 'outputs/campus-helper-demo.html')).href);
+    await page.locator('#entry-enter').click();
     await page.getByRole('heading', { name: '发现问卷' }).waitFor(); assert.equal(await page.locator('.survey-card').count(), 8); assert.deepEqual(errors, []);
     console.log('Standalone file:// artifact opens without network or runtime dependencies'); await context.close();
   } finally { await browser.close(); }
