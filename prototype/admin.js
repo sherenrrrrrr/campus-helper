@@ -27,12 +27,14 @@
     }).join('');
   }
   function appealCard(s, x, h, detail = false) {
-    const { e, fmt, badge, button, proofBlock, history } = h;
-    const t = M.task(s, x.taskId), at = x.challenge?.status === 'pending' ? x.challenge.at : x.appealedAt;
+    const { e, fmt, badge, button, proofBlock, history, verdictBlock } = h;
+    const t = M.task(s, x.taskId), at = x.challenge?.at ?? x.appealedAt;
+    const pending = x.status === 'appealed' || x.challenge?.status === 'pending';
     const title = detail ? e(t.title) : `<a href="#admin/appeal/${e(x.id)}">${e(t.title)}</a>`;
-    const info = `<p>发布者：${e(M.user(s, t.publisherId).nickname)}，答题者：${e(M.user(s, x.userId).nickname)}</p><p>申请时间 ${fmt(at)}，已等待 ${Math.floor((s.now - at) / M.HOUR)} 小时</p>`;
-    const decision = `${proofBlock(x)}<div class="callout">${e(x.challenge?.status === 'pending' ? x.challenge.reason : x.appealReason)}</div>${history(x)}<div class="actions">${button('查看并作出裁决', 'judge', `data-id="${e(x.id)}"`, '')}</div>`;
-    return `<article class="task-row"><div class="row-head"><h3>${title}</h3>${badge(x.challenge?.status === 'pending' ? '自动通过争议' : x.appealKind === 'first-review' ? '首份证明复核' : '拒绝申诉', 'warning')}</div>${info}${detail ? decision : `<a class="text-button" href="#admin/appeal/${e(x.id)}">查看申诉详情</a>`}</article>`;
+    const info = `<p>发布者：${e(M.user(s, t.publisherId).nickname)}，答题者：${e(M.user(s, x.userId).nickname)}</p>${at ? `<p>申请时间 ${fmt(at)}${pending ? `，已等待 ${Math.floor((s.now - at) / M.HOUR)} 小时` : ''}</p>` : ''}`;
+    const decision = `${proofBlock(x)}<div class="callout">${e(x.challenge?.reason || x.appealReason || '未记录申请理由')}</div>${history(x)}${pending ? `<div class="actions">${button('查看并作出裁决', 'judge', `data-id="${e(x.id)}"`, '')}</div>` : ''}`;
+    const status = pending ? badge(x.challenge ? '自动通过争议' : x.appealKind === 'first-review' ? '首份证明复核' : '拒绝申诉', 'warning') : badge('已裁决', 'success');
+    return `<article class="task-row"><div class="row-head"><h3>${title}</h3>${status}</div>${detail ? verdictBlock(x) : ''}${info}${detail ? decision : `<a class="text-button" href="#admin/appeal/${e(x.id)}">查看申诉详情</a>`}</article>`;
   }
   function render(s, { section: tab, id, query }, h) {
     const { e, icon, fmt, badge, button, taskBadge, empty, proofBlock, history } = h;
@@ -45,7 +47,7 @@
       return internalPage('users', '用户管理', u.nickname, body, h);
     }
     if (tab === 'appeal') {
-      const x = queue.find(entry => entry.id === id);
+      const x = s.submissions.find(entry => entry.id === id && (entry.status === 'appealed' || entry.challenge?.status === 'pending' || entry.verdict));
       return internalPage('appeals', '申诉队列', '申诉详情', x ? appealCard(s, x, h, true) : '<div class="callout">此申诉已处理或不存在。</div>', h);
     }
     if (tab === 'submission') {
@@ -55,7 +57,11 @@
     }
     const check = M.assertState(s);
     let body = '';
-    if (tab === 'appeals') body = queue.length ? queue.map(x => appealCard(s, x, h)).join('') : empty('当前没有待处理申诉', '这里会显示拒绝申诉、首份证明复核和自动通过争议。', 'admin/tasks', '查看全部任务');
+    if (tab === 'appeals') {
+      const resolved = s.submissions.filter(x => x.verdict).sort((a, b) => b.verdict.at - a.verdict.at);
+      body = (queue.length ? queue.map(x => appealCard(s, x, h)).join('') : empty('当前没有待处理申诉', '这里会显示拒绝申诉、首份证明复核和自动通过争议。', 'admin/tasks', '查看全部任务'))
+        + (resolved.length ? `<h2>已裁决</h2>${resolved.map(x => appealCard(s, x, h)).join('')}` : '');
+    }
     else if (tab === 'submissions') body = submissionList(s, s.submissions.filter(x => x.submittedAt != null || x.type === 'experiment'), h);
     else if (tab === 'tasks') {
       const status = query.get('status') || '';
@@ -78,7 +84,18 @@
   }
   function judgeModal(s, id, h) {
     const x = M.sub(s, id), challenge = x.challenge?.status === 'pending';
-    h.modal('作出管理员裁决', h.dialogForm('judge', id, `<label class="field"><span>裁决结果</span><select name="verdict" required><option value="">选择裁决结果</option>${(challenge ? [['dismiss', '维持通过，不回滚'], ['reverse', '认定恶意提交，回滚奖励']] : [['win', '判答题者胜，发放奖励'], ['uphold', '维持拒绝，释放保留名额'], ['remove', '双方无责，下架任务并释放本记录']]).map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label>${h.reasonField('请写出依据，答题者和发布者都能看到。')}`, '确认裁决'));
+    if (!challenge && x.status !== 'appealed') return;
+    const { e, fmt } = h;
+    const t = M.task(s, x.taskId);
+    const at = challenge ? x.challenge.at : x.appealedAt;
+    const reason = challenge ? x.challenge.reason : x.appealReason;
+    const status = challenge ? '发布者对自动通过申请介入' : x.appealKind === 'first-review' ? '首份证明等待管理员复核' : '答题者申诉中';
+    const summary = `<div class="callout verdict-summary"><dl><div><dt>任务</dt><dd>${e(t.title)}</dd></div><div><dt>奖励</dt><dd>${M.fmtPoints(t.reward)} 分</dd></div><div><dt>发布者</dt><dd>${e(M.user(s, t.publisherId).nickname)}</dd></div><div><dt>答题者</dt><dd>${e(M.user(s, x.userId).nickname)}</dd></div><div class="verdict-summary-wide"><dt>当前状态</dt><dd>${status}${at ? `（${fmt(at)} 申请）` : ''}</dd></div><div class="verdict-summary-wide"><dt>申请理由</dt><dd>${e(reason || '未记录')}</dd></div></dl></div>`;
+    const choices = (challenge ? ['dismiss', 'reverse'] : ['win', 'uphold', 'remove']).map(code => {
+      const { label, effect } = M.VERDICTS[code];
+      return `<label class="verdict-choice"><input type="radio" name="verdict" value="${code}" required><span><strong>${e(label)}</strong><small class="muted">${e(effect)}</small></span></label>`;
+    }).join('');
+    h.modal('作出管理员裁决', h.dialogForm('judge', id, `${summary}<fieldset class="verdict-options"><legend>裁决结果</legend>${choices}</fieldset>${h.reasonField('写清依据，答题者和发布者都会看到这句话。')}`, '确认裁决'));
   }
   function userModal(s, id, h) {
     h.modal('管理' + M.user(s, id).nickname, h.dialogForm('manageUser', id, `<label class="field"><span>管理操作</span><select name="operation"><option value="restrict">限制发布</option><option value="ban">封禁账号</option><option value="restore">解除封禁和发布限制</option><option value="flag">记录一次违规</option><option value="adjust">积分调账</option></select></label><label class="field"><span>限制天数（限制发布时生效）</span><input type="number" name="days" min="1" max="30" value="7"></label><label class="field"><span>调账积分（可保留一位小数，正数增加，负数扣除）</span><input type="number" name="amount" value="0" min="-10000" max="10000" step="0.1" inputmode="decimal"></label>${h.reasonField('说明依据，此操作将保留管理员记录。')}`, '确认管理操作'));

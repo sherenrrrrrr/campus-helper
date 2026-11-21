@@ -52,6 +52,7 @@
   }
   function route() {
     const raw = location.hash.slice(1) || 'hall', [path, query = ''] = raw.split('?');
+    if (path === 'entry') return { name: 'hall', query: new URLSearchParams() };
     const [name, section, recordId] = path.split('/');
     const params = new URLSearchParams(query);
     if (name !== 'admin') return { name, id: section, query: params };
@@ -72,7 +73,7 @@
   function subBadge(x) { return badge(x.automatic && x.status === 'approved' ? (x.history.some(h => h.reason === '超时自动通过') ? '超时自动通过' : '保护自动通过') : subNames[x.status][0], subNames[x.status][1]); }
   function shell(r, u) {
     const adminMode = r.name === 'admin';
-    const frontActive = r.name === 'detail' || r.name === 'review' ? (r.name === 'review' ? 'tasks' : 'hall') : r.name;
+    const frontActive = ['review', 'edit'].includes(r.name) ? 'tasks' : r.name === 'detail' ? 'hall' : r.name;
     const nav = [['hall', 'grid', '问卷大厅'], ['publish', 'plus', '发布问卷'], ['tasks', 'list', '我的任务'], ['points', 'wallet', '积分中心']];
     const adminNav = [['overview', 'grid', '看板'], ['tasks', 'list', '任务'], ['submissions', 'book', '提交'], ['users', 'people', '用户'], ['appeals', 'shield', '申诉']];
     const parent = { review: 'tasks', user: 'users', submission: 'submissions', appeal: 'appeals' }[r.section];
@@ -91,11 +92,11 @@
     $('.skip').href = adminMode ? location.hash : '#main';
     $('.skip').dataset.action = 'skip-main';
     $('#account-toggle').innerHTML = `<span class="avatar">${e(u.nickname.slice(0, 1))}</span><span>${e(u.nickname)}</span>${icon('chevron')}`;
-    const notices = state.notices.filter(n => n.userId === u.id);
-    $('#notice-toggle').innerHTML = icon('bell') + (notices.length ? `<span class="notification-count">${notices.length}</span>` : '');
+    updateNoticeBadge();
     $('#account-menu').innerHTML = adminMode
       ? `<p class="small muted">当前身份：${e(u.nickname)}</p><button type="button" data-action="return-front">${icon('back')}返回前台</button>${u.role === 'admin' ? `<button type="button" data-action="reset">${icon('reset')}演示重置</button>` : ''}`
       : `<p class="small muted">模拟账号切换</p>${state.users.filter((v, index) => index < 3 || v.isDemoResearcher).map(v => `<button type="button" data-action="switch" data-id="${v.id}"><span class="avatar">${e(v.nickname.slice(0, 1))}</span>${e(v.nickname)}${v.id === u.id ? icon('check') : ''}</button>`).join('')}<hr>${u.role === 'admin' ? '<a href="#admin/overview">' + icon('shield') + '管理员后台</a>' : ''}<button type="button" data-action="guide">${icon('book')}演示指南</button><button type="button" data-action="time">${icon('clock')}推进演示时间</button><button type="button" data-action="reset">${icon('reset')}重置演示数据</button>`;
+    $('#account-menu').insertAdjacentHTML('beforeend', `<hr><button type="button" data-action="logout">${icon('back')}退出登录</button>`);
   }
   function render() {
     const r = route(), u = M.user(state); shell(r, u);
@@ -103,6 +104,10 @@
     try {
       if (r.name === 'hall') html = hall(r.query);
       else if (r.name === 'publish') html = publish();
+      else if (r.name === 'edit') {
+        const t = M.task(state, r.id), { task: error } = M.validateTaskEdit(state, t);
+        html = error ? empty('暂时无法编辑', error, 'tasks', '返回我的任务') : publish(t);
+      }
       else if (r.name === 'detail') html = detail(M.task(state, r.id));
       else if (r.name === 'tasks') html = tasks(r.query.get('tab') || 'published');
       else if (r.name === 'review') html = review(M.task(state, r.id));
@@ -112,8 +117,8 @@
     } catch (error) { html = r.name === 'admin' ? empty('暂时找不到这条记录', error.message, 'admin/overview', '返回后台看板') : empty('暂时找不到这条记录', error.message); }
     $('#main').dataset.page = r.name;
     $('#main').innerHTML = html;
-    if (r.name === 'publish') updateBudget();
-    const title = { hall: '问卷大厅', publish: '发布问卷', tasks: '我的任务', points: '积分中心', detail: '问卷详情', review: '审核证明', admin: '管理员后台' }[r.name] || '页面未找到';
+    if (['publish', 'edit'].includes(r.name) && $('#publish-form')) updateBudget();
+    const title = { hall: '问卷大厅', publish: '发布问卷', edit: '编辑问卷', tasks: '我的任务', points: '积分中心', detail: '问卷详情', review: '审核证明', admin: '管理员后台' }[r.name] || '页面未找到';
     document.title = `${title} · 问问校园互助`;
   }
   function campusArt(t) {
@@ -165,7 +170,7 @@
   }
   function experimentTaskRow(t, x) {
     const roster = M.taskSubs(state, t.id), approved = roster.filter(x => x.status === 'approved').length;
-    return `<article class="task-row"><div class="row-head"><h3><a href="#detail/${e(t.id)}">${e(t.title)}</a></h3>${badge('实验', 'info')}</div>${x ? `<p>${experimentMessage(x)}</p><p>${e(t.location)}</p><div class="actions"><a class="btn secondary" href="#detail/${e(t.id)}">查看预约详情${x.status === 'pending' ? '与到场码' : ''}</a></div>` : `<p>已预约 ${roster.length} 人，已结算 ${approved} 人，冻结 ${fp(t.escrow)} 积分</p><div class="actions"><a class="btn" href="#review/${e(t.id)}">报名情况与现场核销</a></div>`}</article>`;
+    return `<article class="task-row"><div class="row-head"><h3><a href="#detail/${e(t.id)}">${e(t.title)}</a></h3>${badge('实验', 'info')}</div>${x ? `${verdictBlock(x)}<p>${experimentMessage(x)}</p><p>${e(t.location)}</p><div class="actions"><a class="btn secondary" href="#detail/${e(t.id)}">查看预约详情${x.status === 'pending' ? '与到场码' : ''}</a></div>` : `<p>已预约 ${roster.length} 人，已结算 ${approved} 人，冻结 ${fp(t.escrow)} 积分</p><div class="actions"><a class="btn" href="#review/${e(t.id)}">报名情况与现场核销</a></div>`}</article>`;
   }
   function experimentRoster(t, scope) {
     const owner = scope !== 'admin' && t.publisherId === state.currentUserId, admin = scope === 'admin' && M.user(state).role === 'admin' && !M.user(state).banned;
@@ -176,7 +181,7 @@
   function experimentPublish() {
     const slots = draft.slots?.length ? draft.slots : [{ startAt: new Date(state.now + M.DAY + 8 * M.HOUR).toISOString().slice(0, 16), minutes: 60, capacity: 1 }];
     const input = (name, label, type = 'text', attrs = '') => `<label class="field"><span>${label}</span><input name="${name}" type="${type}" value="${e(draft[name] ?? '')}" ${attrs} required><small id="error-${name}" aria-live="polite"></small></label>`;
-    return `<div class="narrow"><div class="page-heading"><div><h1>招募实验参与者</h1><p>约好一个时段，认真完成一次研究互助。</p></div></div>${publishTypeTabs('experiment')}<form id="publish-form" novalidate><input type="hidden" name="type" value="experiment"><input type="hidden" name="topic" value="学习研究"><input type="hidden" name="audience" value="全校同学"><div class="panel">${input('title', '实验标题', 'text', 'maxlength="60"')}<label class="field"><span>实验说明</span><textarea name="description" maxlength="1500" required>${e(draft.description || '')}</textarea><small id="error-description"></small></label>${input('audienceText', '目标参与者', 'text', 'maxlength="120"')}<div class="form-grid"><label class="checkbox"><input name="format" type="radio" value="offline" ${draft.format !== 'online' ? 'checked' : ''} style="width:18px;height:18px;min-height:18px;flex-shrink:0">线下</label><label class="checkbox"><input name="format" type="radio" value="online" ${draft.format === 'online' ? 'checked' : ''} style="width:18px;height:18px;min-height:18px;flex-shrink:0">线上</label></div>${input('location', '会面地点或会议链接', 'text', 'maxlength="300" placeholder="东区实验楼 B302，或完整的会议链接"')}<div class="section-title"><h2>预约时段</h2>${button('增加时段', 'add-slot')}</div><p class="small muted">时间采用北京时间。每个时段 15～240 分钟，1～10 人；时段需在招募截止前结束。</p><div id="slot-editor">${slots.map((slot, i) => `<div class="task-row" data-slot-row><h3>时段 ${i + 1}</h3><label class="field"><span>开始时间</span><input type="datetime-local" name="slotStart" value="${e(slot.startAt)}" required></label><div class="form-grid"><label class="field"><span>时长（分钟）</span><input name="slotMinutes" type="number" min="15" max="240" value="${e(slot.minutes)}" required></label><label class="field"><span>人数</span><input name="slotCapacity" type="number" min="1" max="10" value="${e(slot.capacity)}" required></label></div>${slots.length > 1 ? button('移除此时段', 'remove-slot', `data-index="${i}"`) : ''}</div>`).join('')}</div><small class="form-error" id="error-slots" aria-live="polite"></small><p>共 <strong id="experiment-quota">${slots.reduce((n, slot) => n + Number(slot.capacity || 0), 0)}</strong> 个名额，由时段人数自动计算。</p><label class="field"><span>被试要求（选填）</span><textarea name="requirements" maxlength="1000">${e(draft.requirements || '')}</textarea></label><label class="field"><span>线下报酬声明（选填）</span><input name="cashNote" maxlength="150" value="${e(draft.cashNote || '')}" placeholder="如 30 元现金，或一杯咖啡"></label><div class="form-grid">${input('reward', '每人奖励（10～200 积分）', 'number', 'min="10" max="200" step="0.1" inputmode="decimal"')}<label class="field"><span>招募时间（天）</span><input name="days" type="number" min="1" max="60" step="1" inputmode="numeric" value="${e(draft.days || 7)}" required><small id="error-days"></small></label></div><p class="small muted">平台不经手现金。线下报酬由双方自行结算。</p><label class="checkbox"><input type="checkbox" name="ethicsConfirmed" ${draft.ethicsConfirmed ? 'checked' : ''}>本实验已通过必要的伦理审查（涉及人体实验时）</label><label class="checkbox"><input type="checkbox" name="publicPlaceConfirmed" ${draft.publicPlaceConfirmed ? 'checked' : ''}>会面安排在校内公共场所</label><label class="checkbox"><input type="checkbox" name="privacyConfirmed" ${draft.privacyConfirmed ? 'checked' : ''}>我不会向参与者索取与实验无关的个人信息</label><p id="publish-error" class="form-error" role="alert"></p></div><div class="budget" id="budget"></div></form></div>`;
+    return `<div class="narrow"><div class="page-heading"><div><h1>招募实验参与者</h1><p>约好一个时段，认真完成一次研究互助。</p></div></div>${publishTypeTabs('experiment')}<form id="publish-form" novalidate><input type="hidden" name="type" value="experiment"><input type="hidden" name="topic" value="学习研究"><input type="hidden" name="audience" value="全校同学"><div class="panel">${input('title', '实验标题', 'text', 'maxlength="60"')}<label class="field"><span>实验说明</span><textarea name="description" maxlength="1500" required>${e(draft.description || '')}</textarea><small id="error-description"></small></label>${input('audienceText', '目标参与者', 'text', 'maxlength="120"')}<div class="form-grid"><label class="checkbox"><input name="format" type="radio" value="offline" ${draft.format !== 'online' ? 'checked' : ''} style="width:18px;height:18px;min-height:18px;flex-shrink:0">线下</label><label class="checkbox"><input name="format" type="radio" value="online" ${draft.format === 'online' ? 'checked' : ''} style="width:18px;height:18px;min-height:18px;flex-shrink:0">线上</label></div>${input('location', '会面地点或会议链接', 'text', 'maxlength="300" placeholder="东区实验楼 B302，或完整的会议链接"')}<div class="section-title"><h2>预约时段</h2>${button('增加时段', 'add-slot')}</div><p class="small muted">时间采用北京时间。每个时段 15～240 分钟，1～10 人；时段需在招募截止前结束。</p><div id="slot-editor">${slots.map((slot, i) => `<div class="task-row" data-slot-row><h3>时段 ${i + 1}</h3><label class="field"><span>开始时间</span><input type="datetime-local" name="slotStart" value="${e(slot.startAt)}" required></label><div class="form-grid"><label class="field"><span>时长（分钟）</span><input name="slotMinutes" type="number" min="15" max="240" value="${e(slot.minutes)}" required></label><label class="field"><span>人数</span><input name="slotCapacity" type="number" min="1" max="10" value="${e(slot.capacity)}" required></label></div>${slots.length > 1 ? button('移除此时段', 'remove-slot', `data-index="${i}"`) : ''}</div>`).join('')}</div><small class="form-error" id="error-slots" aria-live="polite"></small><p>共 <strong id="experiment-quota">${slots.reduce((n, slot) => n + Number(slot.capacity || 0), 0)}</strong> 个名额，由时段人数自动计算。</p><label class="field"><span>被试要求（选填）</span><textarea name="requirements" maxlength="1000">${e(draft.requirements || '')}</textarea></label><label class="field"><span>线下报酬声明（选填）</span><input name="cashNote" maxlength="150" value="${e(draft.cashNote || '')}" placeholder="如 30 元现金，或一杯咖啡"></label><div class="form-grid">${input('reward', '每人奖励（10～600 积分）', 'number', 'min="10" max="600" step="0.1" inputmode="decimal"')}<label class="field"><span>招募时间（天）</span><input name="days" type="number" min="1" max="60" step="1" inputmode="numeric" value="${e(draft.days || 7)}" required><small id="error-days"></small></label></div><p class="small muted">平台不经手现金。线下报酬由双方自行结算。</p><label class="checkbox"><input type="checkbox" name="ethicsConfirmed" ${draft.ethicsConfirmed ? 'checked' : ''}>本实验已通过必要的伦理审查（涉及人体实验时）</label><label class="checkbox"><input type="checkbox" name="publicPlaceConfirmed" ${draft.publicPlaceConfirmed ? 'checked' : ''}>会面安排在校内公共场所</label><label class="checkbox"><input type="checkbox" name="privacyConfirmed" ${draft.privacyConfirmed ? 'checked' : ''}>我不会向参与者索取与实验无关的个人信息</label><p id="publish-error" class="form-error" role="alert"></p></div><div class="budget" id="budget"></div></form></div>`;
   }
   function card(t) {
     if (M.taskType(t) === 'experiment') return experimentCard(t);
@@ -186,13 +191,13 @@
   function hall(query) {
     const u = M.user(state), search = query.get('q') || '', topic = query.get('topic') || '', audience = query.get('audience') || '', duration = query.get('duration') || '', ended = query.get('ended') === '1';
     let list = state.tasks.filter(t => (ended || t.status === 'open') && (!topic || t.topic === topic) && (!audience || t.audience.includes(audience)) && (!search || (t.title + t.description).includes(search)) && (!duration || (duration === '3' ? t.minutes <= 3 : duration === '5' ? t.minutes > 3 && t.minutes <= 5 : t.minutes > 5)));
-    list.sort((a, b) => M.remaining(state, b) - M.remaining(state, a) || b.reward - a.reward || b.createdAt - a.createdAt);
+    list.sort((a, b) => b.createdAt - a.createdAt);
     const type = query.get('type') || '';
     if (type) list = list.filter(t => M.taskType(t) === type);
     const typeHref = value => { const q = new URLSearchParams(query); value ? q.set('type', value) : q.delete('type'); return '#hall?' + q; };
     const typeFilter = `<nav class="topic-chips" aria-label="任务类型筛选">${[['', '全部'], ['survey', '问卷'], ['experiment', '实验']].map(([value, label]) => `<a href="${e(typeHref(value))}" ${type === value ? 'aria-current="page"' : ''}>${label}</a>`).join('')}</nav>`;
     const topicHref = value => { const q = new URLSearchParams(query); value ? q.set('topic', value) : q.delete('topic'); return '#hall?' + q; };
-    return `<section class="welcome watercolor-welcome"><div class="welcome-copy"><h1>让互助在<br>校园里流动。</h1><p>回答问卷赚积分，用积分发布问卷。</p></div><img class="welcome-art" src="assets/campus-watercolor-hero.webp" width="1000" height="620" alt="校园亭台与湖面的水彩画"></section><section class="wallet-inline" aria-label="我的积分概览"><a class="wallet-available wallet-balance" href="#points"><span>可用积分</span><strong class="number">${fp(u.available)}<span> 分</span></strong></a><div class="wallet-frozen"><span>冻结</span><strong class="number">${fp(u.frozen)}<span> 分</span></strong></div><a class="btn wallet-publish publish-link" href="#publish">发布问卷 ${icon('arrow')}</a></section><div class="board-layout"><section aria-labelledby="hall-title">${typeFilter}<div class="discovery-toolbar"><h2 id="hall-title">发现问卷</h2><label class="search">${icon('search')}<input form="filter-form" name="q" type="search" value="${e(search)}" placeholder="搜索问卷或实验" aria-label="搜索问卷标题或说明" autocomplete="off"></label></div><div class="filter-tools"><nav class="topic-chips" aria-label="快捷主题筛选">${[['', '全部'], ['校园生活', '校园生活'], ['学习研究', '学习研究']].map(([value, label]) => `<a href="${e(topicHref(value))}" ${topic === value ? 'aria-current="page"' : ''}>${label}</a>`).join('')}</nav><details class="filter-details" ${audience || duration || ended || (topic && !['校园生活', '学习研究'].includes(topic)) ? 'open' : ''}><summary>更多筛选${icon('chevron')}</summary><form class="filters" id="filter-form"><input type="hidden" name="type" value="${e(type)}"><select name="topic" aria-label="筛选主题">${options(S.TOPICS, topic, '所有主题')}</select><select name="audience" aria-label="筛选目标人群">${options(S.AUDIENCES, audience, '所有人群')}</select><select name="duration" aria-label="筛选预计耗时"><option value="">不限耗时</option><option value="3" ${duration === '3' ? 'selected' : ''}>3 分钟以内</option><option value="5" ${duration === '5' ? 'selected' : ''}>3～5 分钟</option><option value="more" ${duration === 'more' ? 'selected' : ''}>5 分钟以上</option></select><button type="submit" class="btn secondary">筛选</button><label class="checkbox"><input type="checkbox" name="ended" value="1" ${ended ? 'checked' : ''}>包含已满、已结束和已下架</label></form></details></div><div class="result-info"><span>找到 ${list.length} 个任务</span><span>可领名额优先，其次奖励</span></div>${list.length ? `<div class="survey-grid compact-grid">${list.slice(0, pageSize).map(card).join('')}</div>${list.length > pageSize ? `<div class="load-more">${button('再看看更多问卷', 'more')}</div>` : '<p class="pagination-text">已经看到全部问卷了</p>'}` : empty('暂时没有符合条件的问卷', '可以换个筛选条件，或者先发布一份自己的问卷。', 'publish', '发布第一份问卷')}</section><aside class="sidebar"><section class="side-panel"><h3>让积分转起来</h3><ol class="steps"><li>找一份感兴趣的问卷<small>确认自己符合目标人群</small></li><li>填完，回来交完成页截图<small>只截完成提示，保护隐私</small></li><li>审核通过，积分到账<small>48 小时未审核会自动通过</small></li><li>用积分，发布你的问卷<small>每次招募最多 20 份</small></li></ol></section><section class="side-panel"><h3>小份问卷，也值得认真</h3><p>这里服务同学之间的小额互助。积分只能用于发布问卷，不可提现、转让或兑换实物。</p><button type="button" class="text-button" data-action="rules">了解积分规则 ${icon('arrow')}</button></section><p class="side-note"><strong>这是一片演示校园</strong>问卷、昵称与进度均为示例数据。</p></aside></div>`;
+    return `<section class="welcome watercolor-welcome"><div class="welcome-copy"><h1>让互助在<br>校园里流动。</h1><p>回答问卷赚积分，用积分发布问卷。</p></div><img class="welcome-art" src="assets/campus-watercolor-hero.webp" width="1000" height="620" alt="校园亭台与湖面的水彩画"></section><section class="wallet-inline" aria-label="我的积分概览"><a class="wallet-available wallet-balance" href="#points"><span>可用积分</span><strong class="number">${fp(u.available)}<span> 分</span></strong></a><div class="wallet-frozen"><span>冻结</span><strong class="number">${fp(u.frozen)}<span> 分</span></strong></div><a class="btn wallet-publish publish-link" href="#publish">发布问卷 ${icon('arrow')}</a></section><div class="board-layout"><section aria-labelledby="hall-title">${typeFilter}<div class="discovery-toolbar"><h2 id="hall-title">发现问卷</h2><label class="search">${icon('search')}<input form="filter-form" name="q" type="search" value="${e(search)}" placeholder="搜索问卷或实验" aria-label="搜索问卷标题或说明" autocomplete="off"></label></div><div class="filter-tools"><nav class="topic-chips" aria-label="快捷主题筛选">${[['', '全部'], ['校园生活', '校园生活'], ['学习研究', '学习研究']].map(([value, label]) => `<a href="${e(topicHref(value))}" ${topic === value ? 'aria-current="page"' : ''}>${label}</a>`).join('')}</nav><details class="filter-details" ${audience || duration || ended || (topic && !['校园生活', '学习研究'].includes(topic)) ? 'open' : ''}><summary>更多筛选${icon('chevron')}</summary><form class="filters" id="filter-form"><input type="hidden" name="type" value="${e(type)}"><select name="topic" aria-label="筛选主题">${options(S.TOPICS, topic, '所有主题')}</select><select name="audience" aria-label="筛选目标人群">${options(S.AUDIENCES, audience, '所有人群')}</select><select name="duration" aria-label="筛选预计耗时"><option value="">不限耗时</option><option value="3" ${duration === '3' ? 'selected' : ''}>3 分钟以内</option><option value="5" ${duration === '5' ? 'selected' : ''}>3～5 分钟</option><option value="more" ${duration === 'more' ? 'selected' : ''}>5 分钟以上</option></select><button type="submit" class="btn secondary">筛选</button><label class="checkbox"><input type="checkbox" name="ended" value="1" ${ended ? 'checked' : ''}>包含已满、已结束和已下架</label></form></details></div><div class="result-info"><span>找到 ${list.length} 个任务</span></div>${list.length ? `<div class="survey-grid compact-grid">${list.slice(0, pageSize).map(card).join('')}</div>${list.length > pageSize ? `<div class="load-more">${button('再看看更多问卷', 'more')}</div>` : '<p class="pagination-text">已经看到全部问卷了</p>'}` : empty('暂时没有符合条件的问卷', '可以换个筛选条件，或者先发布一份自己的问卷。', 'publish', '发布第一份问卷')}</section><aside class="sidebar"><section class="side-panel"><h3>让积分转起来</h3><ol class="steps"><li>找一份感兴趣的问卷<small>确认自己符合目标人群</small></li><li>填完，回来交完成页截图<small>只截完成提示，保护隐私</small></li><li>审核通过，积分到账<small>48 小时未审核会自动通过</small></li><li>用积分，发布你的问卷<small>每次招募最多 20 份</small></li></ol></section><section class="side-panel"><h3>小份问卷，也值得认真</h3><p>这里服务同学之间的小额互助。积分只能用于发布问卷，不可提现、转让或兑换实物。</p><button type="button" class="text-button" data-action="rules">了解积分规则 ${icon('arrow')}</button></section><p class="side-note"><strong>这是一片演示校园</strong>问卷、昵称与进度均为示例数据。</p></aside></div>`;
   }
   function detail(t) {
     if (M.taskType(t) === 'experiment') return experimentDetail(t);
@@ -235,15 +240,19 @@
     if (x.status === 'approved' && detailPage) return '<a class="text-button" href="#points?type=reward">查看积分流水</a>';
     return '';
   }
-  function publish() {
-    if ((draft.type || route().query.get('type')) === 'experiment') return experimentPublish();
-    const field = (name, label, type = 'text', placeholder = '', attrs = '') => `<label class="field"><span>${label}</span><input name="${name}" type="${type}" value="${e(draft[name] ?? '')}" placeholder="${placeholder}" ${attrs} required><small id="error-${name}" aria-live="polite"></small></label>`;
-    return `<div class="narrow"><div class="page-heading"><div><h1>发出你的问卷</h1><p>把需求说清楚，让合适的同学来帮你。</p></div></div>${publishTypeTabs('survey')}<form id="publish-form" novalidate><input type="hidden" name="type" value="survey"><div class="panel"><div class="form-heading"><span>1</span><h2>介绍一下你的问卷</h2></div>${field('title', '问卷标题', 'text', '例如：大学生使用 AI 学习工具的习惯', 'maxlength="60" autocomplete="off"') }<label class="field"><span>问卷说明</span><textarea name="description" required maxlength="1500" placeholder="研究用途、填写要求，以及你想告诉答题者的事">${e(draft.description || '')}</textarea><small id="error-description" aria-live="polite"></small></label><div class="form-grid"><label class="field"><span>问卷主题</span><select name="topic" required>${options(S.TOPICS, draft.topic, '选择主题')}</select><small id="error-topic" aria-live="polite"></small></label>${field('minutes', '预计耗时（分钟）', 'number', '3', 'min="1" max="60" inputmode="numeric"')}</div>${field('audienceText', '目标人群', 'text', '例如：大三及以上，有过实习经历', 'maxlength="120"')}<label class="field"><span>人群标签</span><select name="audience">${options(S.AUDIENCES, draft.audience?.[0] || '全校同学')}</select><small>标签用于筛选，不会限制其他同学查看。</small></label>${field('link', '外部问卷链接', 'url', 'https://', 'autocomplete="url"')}<p class="small muted" id="publish-source-hint" aria-live="polite"></p><p class="small muted">请勿收集学号、证件号或账户密码。示例问卷可使用 https://surveys.example/my-study 。</p><div class="form-heading" style="margin-top:32px"><span>2</span><h2>设置你的招募计划</h2></div><div class="form-grid">${field('reward', '单份奖励（积分）', 'number', '10', 'min="5" max="50" step="0.1" inputmode="decimal"')}${field('quota', '招募数量（份）', 'number', '8', 'min="1" max="200" step="1" inputmode="numeric"')}<label class="field"><span>招募时间（天）</span><input name="days" type="number" min="1" max="60" step="1" inputmode="numeric" value="${e(draft.days || 7)}" required><small id="error-days"></small></label></div><div class="callout">每次最多招募 200 份，适合课程和小组研究的小额互助。发布会先冻结积分，未用完的积分在所有提交结清后退回。</div><p id="publish-error" class="form-error" role="alert"></p></div><div class="budget" id="budget"></div></form></div>`;
+  function publish(editing) {
+    if (!editing && (draft.type || route().query.get('type')) === 'experiment') return experimentPublish();
+    const values = editing ? M.taskEditValues(state, editing) : { ...draft, days: draft.days || 7 };
+    const claimed = editing ? M.taskSubs(state, editing.id).length : 0;
+    const editNote = claimed ? `已有 ${claimed} 人领取，奖励、名额、链接和截止时间已锁定，以免已领取的同学遇到不同的招募条件。仍可修改标题、说明和人群等信息。` : '修改奖励或名额会同步调整已冻结的预算。修改招募时间后，从保存时重新计算截止日期。';
+    const field = (name, label, type = 'text', placeholder = '', attrs = '') => `<label class="field"><span>${label}</span><input name="${name}" type="${type}" value="${e(values[name] ?? '')}" placeholder="${placeholder}" ${attrs} ${claimed && ['link', 'reward', 'quota', 'days'].includes(name) ? 'disabled' : 'required'}><small id="error-${name}" aria-live="polite"></small></label>`;
+    return `<div class="narrow">${editing ? `<a class="back" href="#tasks?tab=published">${icon('back')}返回我发布的任务</a>` : ''}<div class="page-heading"><div><h1>${editing ? '编辑问卷' : '发出你的问卷'}</h1><p>${editing ? editNote : '把需求说清楚，让合适的同学来帮你。'}</p></div></div>${editing ? '' : publishTypeTabs('survey')}<form id="publish-form" novalidate><input type="hidden" name="type" value="survey"><div class="panel"><div class="form-heading"><span>1</span><h2>介绍一下你的问卷</h2></div>${field('title', '问卷标题', 'text', '例如：大学生使用 AI 学习工具的习惯', 'maxlength="60" autocomplete="off"') }<label class="field"><span>问卷说明</span><textarea name="description" required maxlength="1500" placeholder="研究用途、填写要求，以及你想告诉答题者的事">${e(values.description || '')}</textarea><small id="error-description" aria-live="polite"></small></label><div class="form-grid"><label class="field"><span>问卷主题</span><select name="topic" required>${options(S.TOPICS, values.topic, '选择主题')}</select><small id="error-topic" aria-live="polite"></small></label>${field('minutes', '预计耗时（分钟）', 'number', '3', 'min="1" max="60" inputmode="numeric"')}</div>${field('audienceText', '目标人群', 'text', '例如：大三及以上，有过实习经历', 'maxlength="120"')}<label class="field"><span>人群标签</span><select name="audience">${options(S.AUDIENCES, values.audience?.[0] || '全校同学')}</select><small>标签用于筛选，不会限制其他同学查看。</small></label>${field('link', '外部问卷链接', 'url', 'https://', 'autocomplete="url"')}<p class="small muted" id="publish-source-hint" aria-live="polite"></p><p class="small muted">请勿收集学号、证件号或账户密码。示例问卷可使用 https://surveys.example/my-study 。</p><div class="form-heading" style="margin-top:32px"><span>2</span><h2>设置你的招募计划</h2></div><div class="form-grid">${field('reward', '单份奖励（积分）', 'number', '10', 'min="5" max="600" step="0.1" inputmode="decimal"')}${field('quota', '招募数量（份）', 'number', '8', 'min="1" max="200" step="1" inputmode="numeric"')}${field('days', '招募时间（天）', 'number', '7', 'min="1" max="60" step="1" inputmode="numeric"')}</div>${editing ? '' : '<div class="callout">每次最多招募 200 份，适合课程和小组研究的小额互助。发布会先冻结积分，未用完的积分在所有提交结清后退回。</div>'}<p id="publish-error" class="form-error" role="alert"></p></div><div class="budget" id="budget"></div></form></div>`;
   }
   function publishInput() {
     const form = $('#publish-form'); if (!form) return null;
     const input = Object.fromEntries(new FormData(form)); input.audience = [input.audience];
     input.type = form.elements.type?.value || 'survey';
+    if (route().name === 'edit' && input.days === form.elements.days.defaultValue) delete input.days;
     if (input.type === 'experiment') {
       input.slots = [...form.querySelectorAll('[data-slot-row]')].map(row => ({ startAt: row.querySelector('[name=slotStart]').value, minutes: Number(row.querySelector('[name=slotMinutes]').value), capacity: Number(row.querySelector('[name=slotCapacity]').value) }));
       input.quota = input.slots.reduce((sum, slot) => sum + slot.capacity, 0);
@@ -254,6 +263,24 @@
   }
   function updateBudget(validateName) {
     const input = publishInput(); if (!input) return;
+    const r = route();
+    if (r.name === 'edit') {
+      const t = M.task(state, r.id);
+      const errors = M.validateTaskEdit(state, t, input);
+      const claimed = M.taskSubs(state, t.id).length > 0;
+      const budget = claimed ? t.escrow : M.toUnits(input.reward) * Number(input.quota);
+      const delta = budget - t.escrow;
+      const valid = !errors.reward && !errors.quota && Number.isFinite(budget);
+      const summary = claimed ? `当前冻结 ${fp(t.escrow)} 分`
+        : !valid ? '请输入有效的奖励和招募数量。'
+        : `修改后冻结 ${fp(budget)} 分${delta === 0 ? '' : delta > 0 ? `，需补冻结 ${fp(delta)} 分` : `，退回 ${fp(-delta)} 分`}`;
+      const budgetMarkup = `<div><strong>${summary}</strong>${errors.budget ? `<p class="red">${e(errors.budget)}</p>` : ''}</div><button type="submit" class="btn" ${errors.task || errors.budget || !valid ? 'disabled' : ''}>保存修改</button>`;
+      const node = $('#budget');
+      node.classList.toggle('error', !!errors.budget || !valid);
+      if (node._markup !== budgetMarkup) { node.innerHTML = budgetMarkup; node._markup = budgetMarkup; }
+      if (validateName) showFieldError(validateName, errors);
+      return errors;
+    }
     if (!input.reward && !('reward' in draft)) input.reward = $('#publish-form [name="reward"]').value = input.type === 'experiment' ? 100 : 10;
     if (input.type !== 'experiment' && !input.quota && !('quota' in draft)) input.quota = $('#publish-form [name="quota"]').value = 8;
     if (input.type !== 'experiment' && !input.minutes && !('minutes' in draft)) input.minutes = $('#publish-form [name="minutes"]').value = 3;
@@ -264,27 +291,36 @@
       : '本任务未接入来源编号核对。发现异常数据时将无法定位到具体同学。';
     const errors = M.validatePublish(state, input), budget = M.toUnits(+input.reward) * +input.quota, balance = M.user(state).available, short = budget - balance;
     const experiment = input.type === 'experiment';
-    const validBudget = Number.isFinite(+input.reward) && Math.abs(M.toPoints(M.toUnits(+input.reward)) - +input.reward) < 1e-9 && +input.reward >= (experiment ? 10 : 5) && +input.reward <= (experiment ? 200 : 50) && Number.isInteger(+input.quota) && +input.quota >= 1 && (experiment || +input.quota <= 200);
+    const validBudget = Number.isFinite(+input.reward) && Math.abs(M.toPoints(M.toUnits(+input.reward)) - +input.reward) < 1e-9 && +input.reward >= (experiment ? 10 : 5) && +input.reward <= 600 && Number.isInteger(+input.quota) && +input.quota >= 1 && (experiment || +input.quota <= 200);
     if ($('#experiment-quota')) $('#experiment-quota').textContent = String(input.quota);
     $('#budget').className = 'budget' + (short > 0 || !validBudget ? ' error' : '');
     const rewards = state.tasks.filter(t => t.status === 'open' && t.publisherId !== state.currentUserId).map(t => t.reward), unit = rewards.length ? Math.max(...rewards) : M.toUnits(10);
     const budgetMarkup = `<div><strong>冻结 ${e(input.reward || 0)} × ${e(input.quota || 0)} = ${Number.isFinite(budget) ? fp(budget) : 0} 分</strong><p>当前可用 ${fp(balance)} 分，发布后剩余 ${fp(Math.max(0, balance - budget))} 分</p>${short > 0 && validBudget ? `<p class="red">还差 ${fp(short)} 分。<a href="#hall">按每份 ${fp(unit)} 分估算，答约 ${Math.ceil(short / unit)} 份可补足</a>，以实际审核通过为准。</p>` : ''}${!validBudget ? '<p class="red">请填写有效的奖励和招募数量。</p>' : ''}</div><button type="submit" class="btn" ${short > 0 || !validBudget ? 'disabled' : ''}>${experiment ? '确认发布实验' : '确认发布问卷'}</button>`;
     // Do not replace the pressed submit button during the input's blur event.
     if ($('#budget')._markup !== budgetMarkup) { $('#budget').innerHTML = budgetMarkup; $('#budget')._markup = budgetMarkup; }
-    if (validateName) {
-      const node = $(`#error-${validateName}`), field = $(`#publish-form [name="${validateName}"]`);
-      if (node) { node.textContent = errors[validateName] || ''; node.className = errors[validateName] ? 'error' : ''; }
-      field?.setAttribute('aria-invalid', errors[validateName] ? 'true' : 'false');
-    }
+    if (validateName) showFieldError(validateName, errors);
     return errors;
+  }
+  function showFieldError(name, errors) {
+    const node = document.getElementById('error-' + name);
+    const field = $('#publish-form')?.elements.namedItem(name);
+    if (node) { node.textContent = errors[name] || ''; node.className = errors[name] ? 'error' : ''; }
+    field?.setAttribute('aria-invalid', errors[name] ? 'true' : 'false');
   }
   function tasks(tab) {
     const u = M.user(state), published = tab !== 'joined', list = published ? state.tasks.filter(t => t.publisherId === u.id).sort((a, b) => b.createdAt - a.createdAt) : state.submissions.filter(x => x.userId === u.id).sort((a, b) => b.createdAt - a.createdAt);
     return `<div class="narrow"><div class="page-heading"><div><h1>我的任务</h1><p>每一份认真回答，都值得被看见。</p></div><a class="btn" href="#publish">${icon('plus')}发布问卷</a></div><div class="tabs"><a href="#tasks?tab=published" ${published ? 'aria-current="page"' : ''}>我发布的</a><a href="#tasks?tab=joined" ${!published ? 'aria-current="page"' : ''}>我参与的</a></div>${list.length ? list.map(v => {
       const t = published ? v : M.task(state, v.taskId), q = M.stats(state, t);
       if (M.taskType(t) === 'experiment') return experimentTaskRow(t, published ? null : v);
-      return `<article class="task-row"><div class="row-head"><h3><a href="#detail/${e(t.id)}">${e(t.title)}</a></h3>${published ? taskBadge(t) : subBadge(v)}</div>${published ? `<p>已收 ${q.approved} / ${t.quota} 份，${q.locked} 人等待提交，${q.disputed} 份申诉保留${q.correction ? `，${q.correction} 份待补正` : ''}</p><p>${q.pending ? badge(`${q.pending} 份待审核`, 'warning') : '暂无待审核证明'} 冻结余额 ${fp(t.escrow)} 分</p><div class="actions"><a class="btn" href="#review/${e(t.id)}">查看提交与审核</a>${['open', 'settling'].includes(t.status) && !t.stopped ? button('停止招募', 'stop', `data-id="${e(t.id)}"`) : ''}</div>` : `<p>${submissionMessage(v)}</p><div class="actions">${submissionActions(v)}<a class="text-button" href="#detail/${e(t.id)}">查看问卷详情</a></div>${history(v)}${v.code ? `<p class="small muted" style="text-align:end">编号 ${e(v.sourceToken || v.code)}</p>` : ''}`}</article>`;
+      return `<article class="task-row"><div class="row-head"><h3><a href="#detail/${e(t.id)}">${e(t.title)}</a></h3>${published ? taskBadge(t) : subBadge(v)}</div>${published ? `<p>已收 ${q.approved} / ${t.quota} 份，${q.locked} 人等待提交，${q.disputed} 份申诉保留${q.correction ? `，${q.correction} 份待补正` : ''}</p><p>${q.pending ? badge(`${q.pending} 份待审核`, 'warning') : '暂无待审核证明'} 冻结余额 ${fp(t.escrow)} 分</p><div class="actions"><a class="btn" href="#review/${e(t.id)}">查看提交与审核</a>${t.status === 'open' && !t.stopped && t.deadline > state.now && !u.banned ? `<a class="btn secondary" href="#edit/${e(t.id)}">编辑</a>` : ''}${['open', 'settling'].includes(t.status) && !t.stopped ? button('停止招募', 'stop', `data-id="${e(t.id)}"`) : ''}</div>` : `${verdictBlock(v)}<p>${submissionMessage(v)}</p><div class="actions">${submissionActions(v)}<a class="text-button" href="#detail/${e(t.id)}">查看问卷详情</a></div>${history(v)}${v.code ? `<p class="small muted" style="text-align:end">编号 ${e(v.sourceToken || v.code)}</p>` : ''}`}</article>`;
     }).join('') : empty(published ? '还没有发出第一份问卷' : '你的第一份互助，从这里开始', published ? '启动积分已备好，写下你想了解的问题吧。' : '去大厅找一份感兴趣的问卷，填完赚取发布积分。', published ? 'publish' : 'hall', published ? '发布我的问卷' : '去回答问卷')}</div>`;
+  }
+  function verdictBlock(x) {
+    const verdict = x.verdict;
+    const outcome = verdict && M.VERDICTS[verdict.code];
+    if (!outcome) return '';
+    const administrator = state.users.find(u => u.id === verdict.by)?.nickname || '管理员';
+    return `<div class="callout verdict"><p class="verdict-label">裁决结果：${e(outcome.label)}</p><p>影响：${e(outcome.effect)}</p><p class="small muted">${fmt(verdict.at)} · ${e(administrator)} · 理由：${e(verdict.reason)}</p></div>`;
   }
   function history(x) {
     if (!x.history.length) return '';
@@ -306,7 +342,7 @@
     } else if (owner && x.status === 'approved' && x.automatic && !x.challenge && state.now < x.resolvedAt + 7 * M.DAY) {
       actions = `<div class="actions">${button('申请管理员介入', 'challenge', `data-id="${e(x.id)}"`)}</div>`;
     }
-    return `<article class="task-row"><div class="row-head"><h3>${e(M.user(state, x.userId).nickname)}的提交</h3>${subBadge(x)}</div>${x.submittedAt ? proofBlock(x) : `<p>${submissionMessage(x)}</p>`}${identifier}${actions}${x.challenge ? `<p>奖励争议：${x.challenge.status === 'pending' ? '管理员处理中' : '已处理'}</p>` : ''}${history(x)}</article>`;
+    return `<article class="task-row"><div class="row-head"><h3>${e(M.user(state, x.userId).nickname)}的提交</h3>${subBadge(x)}</div>${verdictBlock(x)}${x.submittedAt ? proofBlock(x) : `<p>${submissionMessage(x)}</p>`}${identifier}${actions}${x.challenge ? `<p>奖励争议：${x.challenge.status === 'pending' ? '管理员处理中' : '已处理'}</p>` : ''}${history(x)}</article>`;
   }
   function review(t, scope = 'publisher') {
     if (M.taskType(t) === 'experiment') return experimentRoster(t, scope);
@@ -334,11 +370,33 @@
     const earned = state.ledger.filter(l => l.userId === u.id && ['grant', 'reward'].includes(l.type)).reduce((sum, l) => sum + l.availableDelta, 0);
     return `<div class="narrow"><div class="page-heading"><div><p class="page-subtitle">My points</p><h1>我的积分</h1><p>答一份问卷，离自己的下一次招募更近一点。</p></div></div><dl class="balance-strip"><div><dt>可用积分</dt><dd>${fp(u.available)}<small>分</small></dd></div><div><dt>招募冻结</dt><dd>${fp(u.frozen)}<small>分</small></dd></div><div><dt>累计获得</dt><dd>${fp(earned)}<small>分</small></dd></div></dl><div class="section-title"><h2>每一分，都有来处</h2><button type="button" class="text-button" data-action="rules">积分规则</button></div><div class="tabs"><a href="#points" ${!type ? 'aria-current="page"' : ''}>全部流水</a><a href="#points?type=reward" ${type === 'reward' ? 'aria-current="page"' : ''}>答题获得</a><a href="#points?type=freeze" ${type === 'freeze' ? 'aria-current="page"' : ''}>发布冻结</a><a href="#points?type=refund" ${type === 'refund' ? 'aria-current="page"' : ''}>剩余退回</a></div>${list.length ? `<div class="panel table-wrap"><table class="ledger"><thead><tr><th>时间</th><th>原因与关联任务</th><th>积分变化</th><th>状态</th></tr></thead><tbody>${list.map(l => `<tr><td>${fmt(l.createdAt)}</td><td>${e(l.note)}${l.taskId ? `<small><a href="#detail/${e(l.taskId)}">${e(M.task(state, l.taskId).title)}</a></small>` : ''}<small>对手方：${e(l.counterparty)}</small></td><td class="amount ${l.availableDelta > 0 ? 'green' : ''}">${l.availableDelta ? (l.availableDelta > 0 ? '+' : '') + fp(l.availableDelta) + ' 可用' : ''}${l.frozenDelta ? `<small>${l.frozenDelta > 0 ? '+' : ''}${fp(l.frozenDelta)} 冻结</small>` : ''}</td><td>${badge(types[l.type] || l.type)}</td></tr>`).join('')}</tbody></table></div>` : empty('这类流水还没有记录', '每次回答、发布和退款，都会在这里留下明细。')}<div class="callout">积分只能用于本平台发布问卷，不可提现、转让给个人或兑换实物。任务停止后，需先结清领取、审核和申诉，再退剩余冻结积分。</div></div>`;
   }
-  const helpers = { e, icon, fmt, badge, button, empty, taskBadge, subBadge, proofBlock, history, review, reviewSubmission };
-  function modal(title, content) {
+  const helpers = { e, icon, fmt, badge, button, empty, taskBadge, subBadge, proofBlock, history, verdictBlock, review, reviewSubmission };
+  function modal(title, content, showCloseIcon = true) {
     const d = $('#dialog'); if (d.open) d.close();
-    $('#dialog-body').innerHTML = `<div class="dialog-head"><h2 id="dialog-title">${e(title)}</h2><button type="button" class="icon-button" data-action="close" aria-label="关闭弹窗">${icon('close')}</button></div><div class="dialog-content">${content}</div>`;
+    const closeIcon = showCloseIcon ? `<button type="button" class="icon-button" data-action="close" aria-label="关闭弹窗">${icon('close')}</button>` : '';
+    $('#dialog-body').innerHTML = `<div class="dialog-head"><h2 id="dialog-title">${e(title)}</h2>${closeIcon}</div><div class="dialog-content">${content}</div>`;
     d.showModal();
+  }
+  function updateNoticeBadge() {
+    const count = M.unreadCount(state), bell = $('#notice-toggle');
+    bell.setAttribute('aria-label', count ? `查看通知，${count} 条未读` : '查看通知');
+    bell.innerHTML = icon('bell') + (count ? `<span class="notification-count" aria-hidden="true">${count}</span>` : '');
+  }
+  function openNotices() {
+    const userId = state.currentUserId;
+    const wasRead = new Set(state.notices.filter(n => n.userId === userId && n.read).map(n => n.id));
+    if (M.unreadCount(state)) transact({ type: 'readNotices' }, '', false);
+    updateNoticeBadge();
+    const rows = state.notices.filter(n => n.userId === userId).reverse().map(n => {
+      const unread = !wasRead.has(n.id);
+      const contents = `<span class="notice-copy"><span>${unread ? '<span class="sr-only">未读：</span>' : ''}${e(n.text)}</span>${n.reason ? `<small>理由：${e(n.reason)}</small>` : ''}<small>${fmt(n.at)}</small></span>`;
+      const cls = 'notice-row' + (unread ? ' notice-unread' : '');
+      return n.href
+        ? `<a class="${cls}" href="#${e(n.href)}" data-action="open-notice" data-id="${e(n.id)}">${contents}${icon('arrow')}</a>`
+        : `<div class="${cls}">${contents}</div>`;
+    });
+    const content = rows.length ? `<div class="notice-list">${rows.join('')}</div>` : '<p>还没有通知。审核、到账和裁决结果都会出现在这里。</p>';
+    modal('我的通知', `${content}<div class="actions">${button('关闭', 'close')}</div>`, false);
   }
   const dialogForm = (type, id, fields, label, danger = false) => `<form data-dialog-form="${type}" data-id="${e(id)}">${fields}<p class="form-error" role="alert" id="dialog-error"></p><div class="actions">${button('取消', 'close')}<button type="submit" class="btn ${danger ? 'danger' : ''}">${e(label)}</button></div></form>`;
   const reasonField = placeholder => `<label class="field"><span>具体理由（必填）</span><textarea name="reason" maxlength="500" placeholder="${e(placeholder)}" required></textarea></label>`;
@@ -383,6 +441,7 @@
       else if (action === 'close') close();
       else if (action === 'skip-main') { event.preventDefault(); $('#main').focus(); }
       else if (action === 'return-front') go('hall');
+      else if (action === 'logout') go('entry');
       else if (action === 'switch') { close(); if (transact({ type: 'switch', userId: id }, `已切换到${M.user(state, id).nickname}`)) { draft = {}; go(M.user(state).role === 'admin' ? 'admin/overview' : 'hall'); } }
       else if (action === 'publish-type') {
         draft = publishInput() || draft; const nextType = target.dataset.type;
@@ -456,8 +515,13 @@
       else if (action === 'time') modal('推进演示时间', dialogForm('advance', '', `<p>仅改变本原型的时钟，用来演示领取释放、审核超时和截图清理，不修改电脑时间。</p><p>当前演示时间：${fmt(state.now)}</p><label class="field"><span>向前推进</span><select name="hours"><option value="6">6 小时，查看审核提醒</option><option value="25">25 小时，演示领取释放</option><option value="49">49 小时，演示超时自动通过</option><option value="169">7 天后，演示申诉期满与图片清理</option></select></label>`, '推进时间'));
       else if (action === 'reset') modal('重置整个演示', dialogForm('reset', '', '<p>清除所有自建问卷、截图、积分变动和处理记录，恢复示例数据，小林与阿哲回到 100 分。此操作不可撤销。</p>', '确认重置', true));
       else if (action === 'repair') { try { localStorage.removeItem(KEY); storageOK = true; persist(state); $('#storage-warning').hidden = true; toast('演示存储已恢复。'); } catch { toast('浏览器仍不允许存储，可继续体验临时模式。', true); } }
-      else if (action === 'notices') { const list = state.notices.filter(n => n.userId === state.currentUserId).slice().reverse(); modal('我的通知', list.length ? list.map(n => `<div class="detail-section"><p>${e(n.text)}</p><small class="muted">${fmt(n.at)}</small></div>`).join('') + button('清空这些通知', 'read-notices') : '<p>目前没有新通知。审核、到账和管理结果都会出现在这里。</p>'); }
-      else if (action === 'read-notices') { if (transact({ type: 'readNotices' }, '通知已清空')) close(); }
+      else if (action === 'notices') openNotices();
+      else if (action === 'open-notice') {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        const notice = state.notices.find(n => n.id === id && n.userId === state.currentUserId);
+        if (notice?.href) { close(); go(notice.href); }
+      }
       else if (action === 'rules') modal('积分怎么转起来', '<ol><li>每个演示账号获得一次性 100 分启动积分。</li><li>发布问卷先冻结“奖励 × 名额”。领取和提交不扣答题者积分，也不额外冻结。</li><li>审核通过后，从发布者冻结余额转入答题者可用余额。48 小时未审核自动通过。</li><li>拒绝后保留 7 天申诉额度和名额；申诉中持续保留。全部在途记录结清后才退剩余预算。</li><li>想继续发问卷，就先认真回答同学的问卷。积分不可变现或私下转让。</li></ol><p class="small muted">24 小时提交、48 小时审核、7 天申诉和每日最多提交 5 份，均是待试点验证的原型默认规则。</p>');
       else if (action === 'privacy') modal('这个原型会存什么', '<p>本原型不注册、不上传服务器，不收集邮箱、学号、真实姓名或问卷答案。问卷说明、昵称、提交编号、截图缩略图和模拟积分保存在当前浏览器。打开支持的问卷时，链接会把编号传给问卷平台，发布者可用编号关联这份答卷和你的问问账号。</p><p>截图只允许包含完成提示。审核结清 7 天后，下次读取会清理图片；申诉处理中继续保留。重置立即清除本原型的数据。</p><p>数据在同一浏览器刷新后保留；隐私模式、清理浏览器或更换网址可能丢失。请勿上传真实个人资料。演示账号切换不是真实的身份认证。</p>');
       else if (action === 'guide') modal('三分钟，体验一次校园互助', '<ol><li>用小林发布一份问卷：10 分 × 8 份，100 分变成可用 20、冻结 80。</li><li>从右上角头像切到阿哲，领取小林的问卷，再点击“打开问卷”。</li><li>回来提交证明。没有截图时，可以生成明确标注的演示图片。</li><li>切回小林，进入“我的任务”审核。首份存疑会转交管理员，避免新发布者直接拒绝所有证明。</li><li>切到管理员处理复核，再查看双方积分流水与守恒看板。</li><li>头像菜单里可推进 49 小时演示自动通过，也可一键重置。</li></ol><p class="small muted">预置问卷采用 .example 演示链接，不会跳到陌生的真实问卷；你发布的 http/https 链接会在新页面打开。</p>');
@@ -486,6 +550,19 @@
     if (form.id === 'filter-form') { pageSize = 8; const params = new URLSearchParams(new FormData(form)); for (const [k, v] of [...params]) if (!v) params.delete(k); go('hall?' + params); }
     if (form.id === 'publish-form') {
       const errors = updateBudget();
+      const r = route();
+      if (r.name === 'edit') {
+        const input = publishInput();
+        for (const key of Object.keys(input)) showFieldError(key, errors);
+        if (Object.keys(errors).length) {
+          const first = Object.keys(errors)[0];
+          $('#publish-error').textContent = errors[first];
+          form.elements.namedItem(first)?.focus();
+          return;
+        }
+        if (transact({ type: 'editTask', taskId: r.id, input }, '修改已保存', false)) go('detail/' + r.id);
+        return;
+      }
       for (const key of Object.keys(draft)) if (key !== 'audience') updateBudget(key);
       if (Object.keys(errors).length) { $('#publish-error').textContent = Object.values(errors)[0]; const first = $(`[name="${Object.keys(errors)[0]}"]`); first?.focus(); return; }
       if (transact({ type: 'publish', input: draft }, draft.type === 'experiment' ? '实验已发布，招募预算已冻结。' : '问卷已发布，招募预算已冻结。', false)) { const t = state.tasks[state.tasks.length - 1]; recentlyPublishedId = t.id; draft = {}; go('detail/' + t.id); }
@@ -527,7 +604,7 @@
     if (event.key !== KEY || !event.newValue) return;
     try { const next = M.migrateState(JSON.parse(event.newValue)); M.assertState(next); state = next; close(); render(); toast('已同步另一个演示标签页的数据。'); } catch { toast('其他标签页的数据无法读取，请重置演示。', true); }
   });
-  window.addEventListener('focus', () => { transact({ type: 'tick' }, '', !$('#dialog').open && route().name !== 'publish'); });
+  window.addEventListener('focus', () => { transact({ type: 'tick' }, '', !$('#dialog').open && !['publish', 'edit'].includes(route().name)); });
   try { state = M.commit(state, { type: 'tick' }, Date.now() + state.timeOffset); persist(state); } catch { toast('演示存储写入失败，本次操作不会持久保存。', true); }
   render();
 })();

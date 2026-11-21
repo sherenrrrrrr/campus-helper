@@ -53,7 +53,7 @@ async function run() {
       await goto('review/' + taskId); await click('reject'); await submitDialog(); assert.equal(await page.locator('dialog').evaluate(d => d.open), true);
       await page.locator('dialog [name="reason"]').selectOption('截图不清晰'); await submitDialog();
       s = await read(); assert.equal(M.sub(s, submissionId).status, 'appealed');
-      await switchTo('u3'); await goto('admin/appeal/' + submissionId); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('完成提示清楚，裁决发放'); await submitDialog();
+      await switchTo('u3'); await goto('admin/appeal/' + submissionId); await click('judge'); await page.locator('dialog input[name="verdict"][value="win"]').check(); await page.locator('dialog textarea[name="reason"]').fill('完成提示清楚，裁决发放'); await submitDialog();
       s = await read(); assert.equal(M.user(s, 'u2').available, M.toUnits(110)); assert.equal(M.user(s, 'u1').frozen, M.toUnits(70)); M.assertState(s);
       // Second responder can be rejected normally, appeal, then receive a reasoned ruling.
       await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await click('proof'); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
@@ -61,7 +61,7 @@ async function run() {
       await switchTo('u1'); await goto('review/' + taskId); await click('reject'); await page.locator('dialog [name="reason"]').selectOption('看不出完成'); await submitDialog();
       assert.equal(M.sub(await read(), secondId).status, 'rejected');
       await switchTo('u3'); await goto('tasks?tab=joined'); await click('appeal'); await page.locator('dialog textarea[name="reason"]').fill('已完成，申请核查'); await submitDialog();
-      await goto('admin/appeal/' + secondId); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('核查后通过'); await submitDialog();
+      await goto('admin/appeal/' + secondId); await click('judge'); await page.locator('dialog input[name="verdict"][value="win"]').check(); await page.locator('dialog textarea[name="reason"]').fill('核查后通过'); await submitDialog();
       M.assertState(await read());
       for (const hash of ['hall', 'publish', 'tasks', 'tasks?tab=joined', 'points', 'admin?tab=appeals', 'admin?tab=tasks', 'admin?tab=users', 'admin?tab=metrics']) {
         await goto(hash); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'overflow: ' + hash);

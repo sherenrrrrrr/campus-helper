@@ -98,6 +98,7 @@
     }
     function closeEntry(event) {
       try { localStorage.setItem(key, 'done'); } catch (_) { /* Temporary mode still permits entry. */ }
+      if (location.hash === '#entry') history.replaceState(null, '', '#hall');
       entry.hidden = true;
       document.body.classList.remove('entry-open');
       background.forEach(function (item) { item[0].inert = item[1]; });
@@ -126,14 +127,21 @@
         line.appendChild(span);
       });
     });
+    function returnToEntry() {
+      try { localStorage.removeItem(key); } catch (_) {}
+      showEntry();
+    }
+    window.addEventListener('hashchange', function () {
+      if (location.hash === '#entry') returnToEntry();
+    });
     document.addEventListener('submit', function (event) {
       if (event.target.dataset.dialogForm !== 'reset') return;
       // app.js handles the same event first; a closed dialog means reset succeeded.
       if (document.getElementById('dialog').open) return;
-      try { localStorage.removeItem(key); } catch (_) {}
-      requestAnimationFrame(showEntry);
+      requestAnimationFrame(returnToEntry);
     });
-    if (!remembered()) showEntry();
+    if (location.hash === '#entry') returnToEntry();
+    else if (!remembered()) showEntry();
   })();
   </script>
 </body>

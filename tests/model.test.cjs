@@ -127,7 +127,7 @@ test('eligibility, screenshot format, privacy confirmation, title and publicatio
   const f = setup(), t = f.publish(); f.switchTo('u2'); assert.throws(() => f.run({ type: 'claim', taskId: t.id }), /确认/);
   const x = f.claim(t); assert.throws(() => f.run({ type: 'submit', submissionId: x.id, screenshot: 'data:text/html;base64,abcd', privacy: true }), /图片|截图/);
   assert.throws(() => f.run({ type: 'submit', submissionId: x.id, screenshot: proof, privacy: false }), /确认截图/);
-  f.switchTo('u1'); for (const override of [{ title: '' }, { reward: 51 }, { quota: 201 }, { minutes: 0 }]) assert.ok(Object.keys(M.validatePublish(f.s, input(override))).length);
+  f.switchTo('u1'); for (const override of [{ title: '' }, { reward: 601 }, { quota: 201 }, { minutes: 0 }]) assert.ok(Object.keys(M.validatePublish(f.s, input(override))).length);
 });
 
 test('decimal publishing freezes integer units and exact budget', () => {
@@ -139,7 +139,7 @@ test('decimal publishing freezes integer units and exact budget', () => {
 test('decimal reward precision and boundaries are enforced without rounding silently', () => {
   const s = seed(start);
   for (const reward of [7.55, 5.01, 49.99]) assert.match(M.validatePublish(s, input({ reward })).reward, /最多保留一位小数/);
-  for (const reward of [NaN, Infinity, 4.9, 50.1]) assert.ok(M.validatePublish(s, input({ reward })).reward);
+  for (const reward of [NaN, Infinity, 4.9, 600.1]) assert.ok(M.validatePublish(s, input({ reward })).reward);
   assert.equal(M.validatePublish(s, input({ reward: 5.1 })).reward, undefined);
 });
 test('decimal payout transfers 75 units once and notifications show points', () => {
