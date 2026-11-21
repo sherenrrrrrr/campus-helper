@@ -59,7 +59,8 @@ async function run() {
       assert.match(await page.locator('.ledger').innerText(), /7\.5/);
       assert.doesNotMatch(await page.locator('.ledger').innerText(), /7\.5000/);
       await switchTo('u3'); await go('admin?tab=tasks');
-      await page.locator(`a[href="#admin/review/${task.id}"]`).click();
+      await page.getByRole('link', { name: '查看提交记录', exact: true })
+        .and(page.locator(`a[href="#admin/review/${task.id}"]`)).click();
       await page.getByRole('heading', { name: '提交记录 · ' + task.title, exact: true }).waitFor();
       assert.equal(await page.locator('#desktop-nav a[href="#tasks"][aria-current="page"], #mobile-nav a[href="#tasks"][aria-current="page"]').count(), 0);
       assert.match(await page.locator('a.back').getAttribute('href'), /^#admin/);
