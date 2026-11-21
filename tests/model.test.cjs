@@ -129,3 +129,136 @@ test('eligibility, screenshot format, privacy confirmation, title and publicatio
   assert.throws(() => f.run({ type: 'submit', submissionId: x.id, screenshot: proof, privacy: false }), /确认截图/);
   f.switchTo('u1'); for (const override of [{ title: '短' }, { reward: 51 }, { quota: 21 }, { minutes: 0 }]) assert.ok(Object.keys(M.validatePublish(f.s, input(override))).length);
 });
+
+test('claim generates a four-character completion code and initializes review fields', () => {
+  const f = setup(), t = f.publish(), x = f.claim(t);
+  assert.equal(t.codeRequired, true);
+  assert.equal(t.codeMode, 'manual');
+  assert.match(x.completionCode, /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/);
+  assert.equal(x.codeVerified, false);
+  assert.equal(x.correctionUsed, 0);
+  assert.equal(x.codeMissingAt, null);
+  f.submit(x);
+  assert.equal(M.sub(f.s, x.id).completionCode, x.completionCode);
+});
+
+test('a collision never reuses the code of a previous claim on the same task', context => {
+  context.mock.method(Math, 'random', () => 0);
+  const f = setup(), t = f.publish(), first = f.claim(t);
+  f.run({ type: 'advance', hours: 25 });
+  const second = f.claim(t, 'u3');
+  assert.equal(M.sub(f.s, first.id).status, 'expired');
+  assert.notEqual(first.completionCode, second.completionCode);
+});
+
+test('completion code modes persist and disabled tasks can still be claimed', () => {
+  const f = setup(), t = f.publish({ codeRequired: false, quota: 1 });
+  const x = f.claim(t);
+  assert.equal(t.codeRequired, false);
+  assert.equal(t.codeMode, 'none');
+  assert.equal(x.completionCode, '');
+  f.switchTo('u1');
+  const url = f.publish({ codeMode: 'url', quota: 1, link: 'https://surveys.example/url' });
+  assert.equal(url.codeRequired, true);
+  assert.equal(url.codeMode, 'url');
+});
+
+test('legacy submissions gain defaults without inventing codes for previous claims', () => {
+  const previous = seed(start);
+  const next = M.commit(previous, { type: 'tick' });
+  assert.ok(next.tasks.every(t => t.codeRequired && t.codeMode === 'manual'));
+  assert.ok(next.submissions.every(x => x.completionCode === '' &&
+    x.codeVerified === false && x.correctionUsed === 0 && x.codeMissingAt === null));
+  assert.equal(previous.submissions[0].completionCode, undefined);
+});
+
+test('a new WJX claim stores a four-character code and attaches it to its launch URL', () => {
+  const f = setup(), t = f.publish({ link: 'https://www.wjx.cn/vm/test.aspx?x=1#frag' }), claim = f.claim(t);
+  const x = { ...claim };
+  delete x.sourceToken; // The original four-character URL is still valid for historical claims.
+  assert.equal(t.codeSupported, true);
+  assert.match(x.code, /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/);
+  assert.equal(x.codeAttached, true);
+  assert.equal(x.codeVerified, false);
+  assert.equal(x.correctionUsed, 0);
+  assert.equal(M.surveyLaunchUrl(t, x), 'https://www.wjx.cn/vm/test.aspx?x=1&sojumpparm=' + x.code + '#frag');
+  assert.equal(M.task(f.s, t.id).link, 'https://www.wjx.cn/vm/test.aspx?x=1#frag');
+});
+
+test('task codes are stable, short uppercase identifiers', () => {
+  for (const id of ['t3', 'task-12', 'b7f3', 'z', '---', 'sample-101', 'alpha-long']) {
+    assert.match(M.taskCode(id), /^[A-Z0-9]{2,4}$/);
+    assert.equal(M.taskCode(id), M.taskCode(id));
+  }
+});
+test('task code preserves short IDs and follows the specified examples', () => {
+  assert.equal(M.taskCode('t3'), 'T3');
+  assert.equal(M.taskCode('task-12'), 'T12');
+  assert.equal(M.taskCode('b7f3'), 'B7F3');
+  assert.equal(M.taskCode('---'), 'T0');
+});
+test('submission tokens combine the task and the four-character code', () => {
+  assert.equal(M.submissionToken('t3', 'K7P2'), 'T3-K7P2');
+  assert.notEqual(M.submissionToken('t4', 'K7P2'), M.submissionToken('t3', 'K7P2'));
+});
+test('withCode sets a composite token while preserving query and fragment', () => {
+  assert.equal(M.withCode('https://v.wjx.cn/vm/demo.aspx?x=1&sojumpparm=OLD#frag', 'T3-K7P2'),
+    'https://v.wjx.cn/vm/demo.aspx?x=1&sojumpparm=T3-K7P2#frag');
+});
+test('a new claim persists exactly the token later used to launch the questionnaire', () => {
+  const f = setup(), t = f.publish({ link: 'https://v.wjx.cn/vm/source.aspx' }), x = f.claim(t);
+  assert.equal(x.sourceToken, M.submissionToken(t.id, x.code));
+  assert.equal(new URL(M.surveyLaunchUrl(t, x)).searchParams.get('sojumpparm'), x.sourceToken);
+});
+test('two submissions in one task share the task prefix but have distinct tokens', () => {
+  const f = setup(), t = f.publish({ link: 'https://wjx.cn/vm/unique.aspx' });
+  const a = f.claim(t), b = f.claim(t, 'u3');
+  assert.equal(a.sourceToken.split('-')[0], b.sourceToken.split('-')[0]);
+  assert.notEqual(a.sourceToken, b.sourceToken);
+});
+test('an invalid or unsafe questionnaire URL has no launch target', () => {
+  for (const link of ['malformed', 'javascript:alert(1)', 'https://user:pass@wjx.cn/vm/a']) {
+    assert.equal(M.surveyLaunchUrl({ link }, { code: 'K7P2', sourceToken: 'T3-K7P2', codeAttached: true }), null);
+  }
+});
+test('a composite identifier is never attached to an unrelated hostname', () => {
+  const link = 'https://wjx.cn.unrelated.example/abc?x=1';
+  assert.equal(M.surveyLaunchUrl({ link }, { code: 'K7P2', sourceToken: 'T3-K7P2', codeAttached: true }), link);
+});
+
+test('the new code field stays unique across claims for the same task even on collision', context => {
+  context.mock.method(Math, 'random', () => 0);
+  const f = setup(), t = f.publish({ link: 'https://wjx.cn/vm/test.aspx' });
+  assert.notEqual(f.claim(t, 'u2').code, f.claim(t, 'u3').code);
+});
+
+test('withCode adds the first search parameter', () => {
+  assert.equal(M.withCode('https://wjx.cn/abc.aspx', 'K7P2'), 'https://wjx.cn/abc.aspx?sojumpparm=K7P2');
+});
+
+test('withCode preserves existing query parameters', () => {
+  assert.equal(M.withCode('https://wjx.cn/abc.aspx?x=1', 'K7P2'), 'https://wjx.cn/abc.aspx?x=1&sojumpparm=K7P2');
+});
+
+test('withCode replaces every old copy of sojumpparm with one new value', () => {
+  const url = new URL(M.withCode('https://wjx.cn/abc.aspx?sojumpparm=OLD&x=1&sojumpparm=OTHER', 'K7P2'));
+  assert.deepEqual(url.searchParams.getAll('sojumpparm'), ['K7P2']);
+  assert.equal(url.searchParams.get('x'), '1');
+});
+
+test('withCode puts the parameter before the fragment and rejects invalid links', () => {
+  assert.equal(M.withCode('https://wjx.cn/abc.aspx#frag', 'K7P2'), 'https://wjx.cn/abc.aspx?sojumpparm=K7P2#frag');
+  assert.equal(M.withCode('not a link', 'K7P2'), null);
+  assert.equal(M.withCode('javascript:alert(1)', 'K7P2'), null);
+});
+
+test('unsupported and lookalike domains keep the original link while still getting a code', () => {
+  const f = setup(), t = f.publish({ link: 'https://wjx.cn.example.com/abc.aspx?x=1', codeRequired: false });
+  const x = f.claim(t);
+  assert.equal(t.codeSupported, false);
+  assert.match(x.code, /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/);
+  assert.equal(x.codeAttached, false);
+  assert.equal(M.surveyLaunchUrl(t, x), t.link);
+  assert.equal(M.supportsSurveyCode('https://fake-wjx.cn/abc.aspx'), false);
+  assert.equal(M.supportsSurveyCode('https://www.wjx.top/abc.aspx'), false);
+});

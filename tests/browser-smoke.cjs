@@ -14,7 +14,12 @@ async function run() {
       const page = await context.newPage(), errors = [];
       page.on('pageerror', error => errors.push(error.message));
       const click = action => page.locator(`[data-action="${action}"]`).filter({ visible: true }).first().click();
-      const switchTo = async id => { await click('account'); await page.locator(`[data-action="switch"][data-id="${id}"]`).click(); };
+      const switchTo = async id => {
+        if (new URL(page.url()).hash.startsWith('#admin')) {
+          await click('account'); await click('return-front');
+        }
+        await click('account'); await page.locator(`[data-action="switch"][data-id="${id}"]`).click();
+      };
       const goto = async hash => { await page.goto(base + '/#' + hash); await page.waitForSelector('#main h1'); };
       const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('campus-helper-demo')));
       const submitDialog = () => page.locator('dialog form button[type="submit"]').click();
@@ -38,8 +43,8 @@ async function run() {
       let s = await read(), taskId = s.tasks.at(-1).id;
       assert.equal(M.user(s, 'u1').available, 20); assert.equal(M.user(s, 'u1').frozen, 80);
       await goto('publish'); await page.locator('[name="quota"]').fill('20'); assert.equal(await page.getByRole('button', { name: '确认发布问卷' }).isDisabled(), true);
-      await switchTo('u2'); await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await page.getByRole('heading', { name: '已为你保留一个名额' }).waitFor();
-      await page.locator('dialog [data-action="open-survey"]').click(); await page.getByRole('heading', { name: '示例问卷页面', exact: true }).waitFor();
+      await switchTo('u2'); await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim');
+      await click('open-survey'); await page.getByRole('heading', { name: '示例问卷页面', exact: true }).waitFor();
       await page.locator('dialog [data-action="proof"]').click(); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
       s = await read(); const submissionId = s.submissions.at(-1).id; assert.equal(M.sub(s, submissionId).status, 'pending');
       await page.reload(); await page.waitForSelector('h1'); assert.equal(await page.locator('[data-action="claim"]').count(), 0);
@@ -47,21 +52,32 @@ async function run() {
       await goto('review/' + taskId); await click('reject'); await submitDialog(); assert.equal(await page.locator('dialog').evaluate(d => d.open), true);
       await page.locator('dialog [name="reason"]').selectOption('截图不清晰'); await submitDialog();
       s = await read(); assert.equal(M.sub(s, submissionId).status, 'appealed');
-      await switchTo('u3'); await goto('admin'); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('完成提示清楚，裁决发放'); await submitDialog();
+      await switchTo('u3'); await goto('admin/appeal/' + submissionId); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('完成提示清楚，裁决发放'); await submitDialog();
       s = await read(); assert.equal(M.user(s, 'u2').available, 110); assert.equal(M.user(s, 'u1').frozen, 70); M.assertState(s);
       // Second responder can be rejected normally, appeal, then receive a reasoned ruling.
-      await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await click('close'); await click('proof'); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
+      await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await click('proof'); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
       const secondId = (await read()).submissions.at(-1).id;
       await switchTo('u1'); await goto('review/' + taskId); await click('reject'); await page.locator('dialog [name="reason"]').selectOption('看不出完成'); await submitDialog();
       assert.equal(M.sub(await read(), secondId).status, 'rejected');
       await switchTo('u3'); await goto('tasks?tab=joined'); await click('appeal'); await page.locator('dialog textarea[name="reason"]').fill('已完成，申请核查'); await submitDialog();
-      await goto('admin'); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('核查后通过'); await submitDialog();
+      await goto('admin/appeal/' + secondId); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('核查后通过'); await submitDialog();
       M.assertState(await read());
       for (const hash of ['hall', 'publish', 'tasks', 'tasks?tab=joined', 'points', 'admin?tab=appeals', 'admin?tab=tasks', 'admin?tab=users', 'admin?tab=metrics']) {
         await goto(hash); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'overflow: ' + hash);
       }
       await goto('admin?tab=metrics'); await page.getByText('积分守恒校验通过。', { exact: false }).waitFor();
-      await switchTo('u2'); await goto('detail/sample-0'); await page.locator('#eligible').check(); await click('claim'); await click('close'); await click('proof');
+      assert.equal(new URL(page.url()).hash, '#admin/overview');
+      for (const target of ['#admin/overview', '#admin/tasks', '#admin/submissions', '#admin/users', '#admin/appeals']) {
+        assert.equal(await page.locator(`#desktop-nav a[href="${target}"]`).count(), 1);
+        assert.equal(await page.locator(`#mobile-nav a[href="${target}"]`).count(), 1);
+      }
+      assert.equal(await page.locator('#desktop-nav a[href="#tasks"], #mobile-nav a[href="#tasks"]').count(), 0);
+      await goto('admin?tab=tasks'); assert.equal(new URL(page.url()).hash, '#admin/tasks');
+      await page.locator('a[href^="#admin/review/"]').first().click();
+      assert.ok(new URL(page.url()).hash.startsWith('#admin/review/'));
+      await page.locator('a.back[href="#admin/tasks"]').click(); assert.equal(new URL(page.url()).hash, '#admin/tasks');
+      await page.reload(); await page.waitForSelector('#main h1'); assert.equal(new URL(page.url()).hash, '#admin/tasks');
+      await switchTo('u2'); await goto('detail/sample-0'); await page.locator('#eligible').check(); await click('claim'); await click('proof');
       await page.locator('#proof-file').setInputFiles({ name: 'demo-completion.png', mimeType: 'image/png', buffer: await page.screenshot() });
       await page.getByText('图片已准备好，确认隐私提示后即可提交。', { exact: true }).waitFor();
       await page.locator('[name="privacy"]').check(); await submitDialog();

@@ -20,7 +20,7 @@
     ['编程入门，最让你卡住的是什么', '学习研究', 6, 15, 6, '计算机学院', '面向学过编程课程的同学，了解学习难点和求助渠道。'],
     ['毕业季，你会怎样处理闲置书籍', '校园生活', 3, 10, 8, '大四', '捐赠、转卖还是带走？希望了解毕业生处理教材和课外书的方式。']
   ];
-  function seed(timestamp = Date.now()) {
+  function seed(timestamp = Date.now(), options = {}) {
     const s = { version: 2, sequence: 0, now: timestamp, timeOffset: 0, currentUserId: 'u1', users: [], tasks: [], submissions: [], ledger: [], notices: [], audit: [] };
     const names = ['小林', '阿哲', '管理员', '许嘉宁', '陈沐', '周雨晴', '陆言', '沈悦', '林可', '吴桐', '郑一凡', '江晴', '顾然', '程语', '苏禾', '方知', '何安', '叶青', '赵予'];
     names.forEach((nickname, i) => {
@@ -40,9 +40,19 @@
         M.entry(s, responder, t.reward, 0, 'reward', '示例问卷审核通过', t.id, x.id, M.user(s, t.publisherId).nickname);
       }
     });
+    M.assertState(s); return options.includeResearcher ? withResearcher(s) : s;
+  }
+  function withResearcher(previous) {
+    const s = M.clone(previous);
+    if (s.users.some(u => u.isDemoResearcher)) return s;
+    const id = 'researcher';
+    if (s.users.some(u => u.id === id)) throw new Error('研究者演示账号编号冲突。');
+    s.users.push({ id, nickname: '研究者·林老师', role: 'user', isDemoResearcher: true, available: 0, frozen: 0, createdAt: s.now, lastActiveAt: s.now, banned: false, violations: 0, restrictedUntil: null, sample: false });
+    M.entry(s, id, 100, 0, 'grant', '研究者演示账号启动积分', null, null, '演示系统');
+    M.entry(s, id, 2900, 0, 'adjust', '研究者演示额度补足至 3000 分，不代表真实注册奖励', null, null, '演示系统初始化');
     M.assertState(s); return s;
   }
-  const api = { seed, TOPICS, AUDIENCES };
+  const api = { seed, withResearcher, TOPICS, AUDIENCES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.CampusSeed = api;
 })(globalThis);
