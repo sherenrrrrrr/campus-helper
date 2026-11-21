@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 452 207">
+  <defs>
+    <path id="wen" fill-rule="evenodd" d="M50 10Q54 6 60 10l25 17q7 5 3 11l-4 6q-4 6-11 2L45 32q-8-4-4-11z
+      M32 51q16-4 16 9l-7 128q-1 9-10 9H17q-9 0-8-9L16 66q1-9 9-12z
+      M100 31h88q15 0 14 16l-7 119q-1 30-31 30h-19q-6 0-8-5l-4-12q-3-8 6-8h13q13 0 14-14l5-101h-69q-8 0-8-7V38q0-7 6-7z
+      M75 77h68q10 0 9 10l-3 56q-1 10-11 10H70q-10 0-9-10l4-56q1-10 10-10z
+      M90 101l-2 28h37l2-28z"/>
+  </defs>
+  <use href="#wen" transform="translate(6 5)"/>
+  <use href="#wen" transform="translate(235 0)"/>
+</svg>
