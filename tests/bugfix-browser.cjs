@@ -17,7 +17,7 @@ async function run() {
       const submitDialog = () => page.locator('dialog button[type="submit"]').click();
       await go('hall'); await page.locator('#entry-enter').click();
       assert.equal(M.user(await read(), 'u20').available, M.toUnits(3000));
-      await switchTo('u20'); await go('publish');
+      await switchTo('u20'); await go('publish/survey');
       for (const [name, value] of Object.entries({ title: '研', description: '小数积分与大样本招募的浏览器验证，数据仅用于演示。', minutes: '3', audienceText: '全校同学', link: `https://surveys.example/fractional-${width}`, reward: '7.5', quota: '8', days: '37' })) await page.locator(`#publish-form [name="${name}"]`).fill(value);
       await page.locator('[name="topic"]').selectOption('学习研究');
       assert.match(await page.locator('#budget').innerText(), /60/);

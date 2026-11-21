@@ -29,7 +29,7 @@ async function run() {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.screenshot({ path: path.join(root, 'outputs', mobile ? 'mobile-preview.png' : 'desktop-preview.png'), fullPage: true });
       await goto('hall?q=找不到的词'); await page.getByRole('heading', { name: '暂时没有符合条件的问卷' }).waitFor();
-      await goto('publish');
+      await goto('publish/survey');
       await page.locator('[name="title"]').fill('浏览器验收问卷记录');
       await page.locator('textarea[name="description"]').fill('仅用于验证演示流程，请勿提供真实个人信息。');
       await page.locator('[name="topic"]').selectOption('学习研究');
@@ -43,7 +43,7 @@ async function run() {
       });
       let s = await read(), taskId = s.tasks.at(-1).id;
       assert.equal(M.user(s, 'u1').available, M.toUnits(20)); assert.equal(M.user(s, 'u1').frozen, M.toUnits(80));
-      await goto('publish'); await page.locator('[name="quota"]').fill('20'); assert.equal(await page.getByRole('button', { name: '确认发布问卷' }).isDisabled(), true);
+      await goto('publish/survey'); await page.locator('[name="quota"]').fill('20'); assert.equal(await page.getByRole('button', { name: '确认发布问卷' }).isDisabled(), true);
       await switchTo('u2'); await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim');
       await click('open-survey'); await page.getByRole('heading', { name: '示例问卷页面', exact: true }).waitFor();
       await page.locator('dialog [data-action="proof"]').click(); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();

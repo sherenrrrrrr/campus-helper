@@ -213,7 +213,7 @@
     return first?.id === x.id;
   }
   function refund(s, t) {
-    if (t.escrow > 0) { entry(s, t.publisherId, t.escrow, -t.escrow, 'refund', '招募结束，剩余积分退回', t.id, null, `任务 ${t.id}`); t.escrow = 0; }
+    if (t.escrow > 0) { entry(s, t.publisherId, t.escrow, -t.escrow, 'refund', '招募结束，剩余积分退回', t.id, null, '平台托管'); t.escrow = 0; }
   }
   function updateTask(s, t) {
     if (t.status === 'closed') return;
@@ -285,7 +285,7 @@
     else i.slots.forEach((slot, index) => {
       const prefix = `第 ${index + 1} 个时段：`;
       if (!Number.isFinite(slotStartAt(slot)) || slotStartAt(slot) <= s.now) errors.slots ||= prefix + '开始时间必须在未来，按北京时间计算。';
-      else if (!Number.isInteger(+slot.minutes) || +slot.minutes < 15 || +slot.minutes > 240) errors.slots ||= prefix + '时长应为 15～240 分钟。';
+      else if (!Number.isInteger(+slot.minutes) || +slot.minutes < 1) errors.slots ||= prefix + '时长必须是大于 0 的整数分钟。';
       else if (!Number.isInteger(+slot.capacity) || +slot.capacity < 1 || +slot.capacity > 10) errors.slots ||= prefix + '人数应为 1～10 人。';
       else if (slotEndAt(slot) > s.now + Number(i.days) * DAY) errors.slots ||= prefix + '结束时间不能超过招募截止时间。';
     });
@@ -420,7 +420,7 @@
       const t = { id: uid(s, 't'), publisherId: actor.id, type: experiment ? 'experiment' : 'survey', title: i.title.trim(), description: i.description.trim(), topic: i.topic || '学习研究', audienceText: String(i.audienceText || i.requirements || '全校同学').trim(), audience: [...new Set(i.audience || ['全校同学'])], minutes: experiment ? +i.slots[0].minutes : +i.minutes, link: experiment ? '' : i.link.trim(), reward: toUnits(i.reward), quota, status: 'open', escrow: toUnits(i.reward) * quota, createdAt: s.now, deadline: s.now + +i.days * DAY, stopped: false, removalReason: '', reports: [] };
       Object.assign(t, completionSettings(i), { codeSupported: supportsSurveyCode(t.link) });
       if (experiment) Object.assign(t, { format: i.format, location: i.location.trim(), slots: i.slots.map(slot => ({ id: uid(s, 'slot'), startAt: new Date(slotStartAt(slot)).toISOString(), minutes: +slot.minutes, capacity: +slot.capacity, booked: [], closed: false })), requirements: String(i.requirements || '').trim().slice(0, 1500), cashNote: String(i.cashNote || '').trim().slice(0, 200), ethicsConfirmed: true, publicPlaceConfirmed: true, privacyConfirmed: true, codeRequired: false, codeMode: 'none', codeSupported: false });
-      entry(s, actor.id, -t.escrow, t.escrow, 'freeze', experiment ? '发布实验，冻结招募预算' : '发布问卷，冻结招募预算', t.id, null, `任务 ${t.id}`); s.tasks.push(t);
+      entry(s, actor.id, -t.escrow, t.escrow, 'freeze', experiment ? '发布实验，冻结招募预算' : '发布问卷，冻结招募预算', t.id, null, '平台托管'); s.tasks.push(t);
     } else if (action.type === 'editTask') {
       active(); editSurveyTask(s, task(s, action.taskId), action.input || {});
     } else if (action.type === 'claim') {

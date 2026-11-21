@@ -1,24 +1,24 @@
 (function (root) {
   'use strict';
   const M = root.CampusModel;
-  function userQuestionnaires(s, u, h) {
+  function userActivity(s, u, h) {
     const { e, fmt, taskBadge } = h;
     const published = s.tasks.filter(t => t.publisherId === u.id).sort((a, b) => b.createdAt - a.createdAt);
     const completed = s.submissions.filter(x => x.userId === u.id && x.status === 'approved').sort((a, b) => b.resolvedAt - a.resolvedAt);
-    const publishedRows = published.map(t => `<li><a href="#admin/review/${e(t.id)}">${e(t.title)}</a> ${taskBadge(t)}<p>发布于 ${fmt(t.createdAt)}，已通过 ${M.approved(s, t)} / ${t.quota} 份</p></li>`);
+    const publishedRows = published.map(t => `<li><a href="#admin/review/${e(t.id)}">${e(t.title)}</a> ${taskBadge(t)}<p>发布于 ${fmt(t.createdAt)}，${M.taskType(t) === 'experiment' ? `已预约 ${M.taskSubs(s, t.id).length} / ${t.quota} 位` : `已通过 ${M.approved(s, t)} / ${t.quota} 份`}</p></li>`);
     const completedRows = completed.map(x => {
       const t = M.task(s, x.taskId);
-      return `<li><a href="#admin/submission/${e(x.id)}">${e(t.title)}</a><p>${fmt(x.resolvedAt)} 审核通过，到账 ${M.fmtPoints(t.reward)} 积分</p></li>`;
+      return `<li><a href="#admin/submission/${e(x.id)}">${e(t.title)}</a><p>${fmt(x.resolvedAt)} ${M.taskType(t) === 'experiment' ? '已结算' : '审核通过'}，到账 ${M.fmtPoints(t.reward)} 积分</p></li>`;
     });
-    return `<details class="history"><summary>发布的问卷（${published.length}）</summary>${publishedRows.length ? `<ul>${publishedRows.join('')}</ul>` : '<p>暂无发布记录。</p>'}</details>
-      <details class="history"><summary>完成的问卷（${completed.length}）</summary>${completedRows.length ? `<ul>${completedRows.join('')}</ul>` : '<p>暂无已通过并到账的问卷。</p>'}</details>`;
+    return `<details class="history"><summary>发布的任务（${published.length}）</summary>${publishedRows.length ? `<ul>${publishedRows.join('')}</ul>` : '<p>暂无发布记录。</p>'}</details>
+      <details class="history"><summary>完成的任务（${completed.length}）</summary>${completedRows.length ? `<ul>${completedRows.join('')}</ul>` : '<p>暂无已结算的任务。</p>'}</details>`;
   }
   function internalPage(back, label, title, body, h) {
     return `<div class="narrow"><a class="back" href="#admin/${back}">${h.icon('back')}返回${label}</a><div class="page-heading"><div><h1>${h.e(title)}</h1><p>以管理员身份查看</p></div></div>${body}</div>`;
   }
   function submissionList(s, submissions, h) {
     const { e, fmt, subBadge, badge } = h;
-    if (!submissions.length) return '<div class="callout">暂无提交记录。</div>';
+    if (!submissions.length) return '<div class="callout">暂无参与记录。</div>';
     return submissions.slice().sort((a, b) => (b.submittedAt ?? b.createdAt) - (a.submittedAt ?? a.createdAt)).map(x => {
       const t = M.task(s, x.taskId);
       const experiment = M.taskType(t) === 'experiment';
@@ -43,7 +43,7 @@
     if (tab === 'review') return h.review(M.task(s, id), 'admin');
     if (tab === 'user') {
       const u = M.user(s, id), risk = M.publisherRisk(s, id);
-      const body = `<article class="task-row"><p>可用积分 ${M.fmtPoints(u.available)}，冻结积分 ${M.fmtPoints(u.frozen)}</p><p>发布审核拒绝率 ${risk.reviewed ? Math.round(risk.rate * 100) + '%' : '暂无审核记录'}，违规 ${u.violations} 次</p>${userQuestionnaires(s, u, h)}${u.role !== 'admin' ? button('管理权限与积分', 'admin-user', `data-id="${e(u.id)}"`) : ''}</article><h2>提交记录</h2>${submissionList(s, s.submissions.filter(x => x.userId === id), h)}`;
+      const body = `<article class="task-row"><p>可用积分 ${M.fmtPoints(u.available)}，冻结积分 ${M.fmtPoints(u.frozen)}</p><p>发布审核拒绝率 ${risk.reviewed ? Math.round(risk.rate * 100) + '%' : '暂无审核记录'}，违规 ${u.violations} 次</p>${userActivity(s, u, h)}${u.role !== 'admin' ? button('管理权限与积分', 'admin-user', `data-id="${e(u.id)}"`) : ''}</article><h2>参与记录</h2>${submissionList(s, s.submissions.filter(x => x.userId === id), h)}`;
       return internalPage('users', '用户管理', u.nickname, body, h);
     }
     if (tab === 'appeal') {
@@ -66,12 +66,12 @@
     else if (tab === 'tasks') {
       const status = query.get('status') || '';
       const rows = s.tasks.filter(t => !status || t.status === status).slice().reverse();
-      body = `<div class="filters"><label for="admin-status">任务状态</label><select id="admin-status" name="adminStatus"><option value="">全部状态</option>${[['open', '招募中'], ['settling', '待结算'], ['closed', '已结束'], ['removed', '已下架']].map(([value, label]) => `<option value="${value}" ${value === status ? 'selected' : ''}>${label}</option>`).join('')}</select></div>${rows.map(t => `<article class="task-row"><div class="row-head"><h3><a href="#admin/review/${e(t.id)}">${e(t.title)}</a></h3>${taskBadge(t)}</div><p>发布者 ${e(M.user(s, t.publisherId).nickname)}，已收 ${M.approved(s, t)} / ${t.quota}，保留预算 ${M.fmtPoints(t.escrow)} 分</p><p>截止 ${fmt(t.deadline)}，链接报告 ${t.reports.length} 次</p>${t.removalReason ? `<p>下架原因：${e(t.removalReason)}</p>` : ''}<div class="actions">${t.status !== 'removed' ? button('强制下架', 'admin-remove', `data-id="${e(t.id)}"`, 'danger') : ''}${['open', 'settling'].includes(t.status) && !t.stopped ? button('延长截止时间', 'admin-extend', `data-id="${e(t.id)}"`) : ''}<a class="text-button" href="#admin/review/${e(t.id)}">查看提交记录</a></div></article>`).join('') || empty('这个状态下没有任务', '换一个状态查看。', 'admin/tasks', '查看全部任务')}`;
+      body = `<div class="filters"><label for="admin-status">任务状态</label><select id="admin-status" name="adminStatus"><option value="">全部状态</option>${[['open', '招募中'], ['settling', '待结算'], ['closed', '已结束'], ['removed', '已下架']].map(([value, label]) => `<option value="${value}" ${value === status ? 'selected' : ''}>${label}</option>`).join('')}</select></div>${rows.map(t => `<article class="task-row"><div class="row-head"><h3><a href="#admin/review/${e(t.id)}">${e(t.title)}</a></h3>${taskBadge(t)}</div><p>发布者 ${e(M.user(s, t.publisherId).nickname)}，${M.taskType(t) === 'experiment' ? `已预约 ${M.taskSubs(s, t.id).length} / ${t.quota} 位` : `已收 ${M.approved(s, t)} / ${t.quota} 份`}，保留预算 ${M.fmtPoints(t.escrow)} 分</p><p>截止 ${fmt(t.deadline)}，${M.taskType(t) === 'experiment' ? '任务报告' : '链接报告'} ${t.reports.length} 次</p>${t.removalReason ? `<p>下架原因：${e(t.removalReason)}</p>` : ''}<div class="actions">${t.status !== 'removed' ? button('强制下架', 'admin-remove', `data-id="${e(t.id)}"`, 'danger') : ''}${['open', 'settling'].includes(t.status) && !t.stopped ? button('延长截止时间', 'admin-extend', `data-id="${e(t.id)}"`) : ''}<a class="text-button" href="#admin/review/${e(t.id)}">${M.taskType(t) === 'experiment' ? '查看预约记录' : '查看提交记录'}</a></div></article>`).join('') || empty('这个状态下没有任务', '换一个状态查看。', 'admin/tasks', '查看全部任务')}`;
     } else if (tab === 'users') {
       const users = s.users.slice().sort((a, b) => +M.publisherRisk(s, b.id).high - +M.publisherRisk(s, a.id).high);
       body = `<p class="small muted">发布审核拒绝率 = 该用户发布的问卷中曾被拒绝的提交数 ÷ 曾通过或被拒绝的提交数。待审不计入；申诉改判后仍保留历史拒绝记录。高于 50% 且至少拒绝 3 份时，触发发布者风险保护。</p>${users.map(u => {
         const risk = M.publisherRisk(s, u.id);
-        return `<article class="task-row"><div class="row-head"><h3><a href="#admin/user/${e(u.id)}">${e(u.nickname)}${u.sample ? '（示例同学）' : ''}</a></h3>${badge(u.banned ? '已封禁' : risk.high ? '高风险发布者' : u.restrictedUntil > s.now ? '限制发布中' : '正常', u.banned ? 'error' : risk.high ? 'warning' : '')}</div><p>可用 ${M.fmtPoints(u.available)}，冻结 ${M.fmtPoints(u.frozen)}</p><p>发布审核拒绝率 ${risk.reviewed ? Math.round(risk.rate * 100) + '%（' + risk.rejected + ' / ' + risk.reviewed + ' 份）' : '暂无审核记录'}，违规 ${u.violations} 次；注册 ${fmt(u.createdAt)}</p>${u.claimRestrictedUntil > s.now ? `<p>限制领取至 ${fmt(u.claimRestrictedUntil)} · 因 3 次提交未按要求填写，暂时无法领取新问卷</p>` : ''}${userQuestionnaires(s, u, h)}${u.role !== 'admin' ? `<div class="actions">${button('管理权限与积分', 'admin-user', `data-id="${e(u.id)}"`)}</div>` : ''}</article>`;
+        return `<article class="task-row"><div class="row-head"><h3><a href="#admin/user/${e(u.id)}">${e(u.nickname)}${u.sample ? '（示例同学）' : ''}</a></h3>${badge(u.banned ? '已封禁' : risk.high ? '高风险发布者' : u.restrictedUntil > s.now ? '限制发布中' : '正常', u.banned ? 'error' : risk.high ? 'warning' : '')}</div><p>可用 ${M.fmtPoints(u.available)}，冻结 ${M.fmtPoints(u.frozen)}</p><p>发布审核拒绝率 ${risk.reviewed ? Math.round(risk.rate * 100) + '%（' + risk.rejected + ' / ' + risk.reviewed + ' 份）' : '暂无审核记录'}，违规 ${u.violations} 次；注册 ${fmt(u.createdAt)}</p>${u.claimRestrictedUntil > s.now ? `<p>限制领取至 ${fmt(u.claimRestrictedUntil)} · 因 3 次提交未按要求填写，暂时无法领取新问卷</p>` : ''}${userActivity(s, u, h)}${u.role !== 'admin' ? `<div class="actions">${button('管理权限与积分', 'admin-user', `data-id="${e(u.id)}"`)}</div>` : ''}</article>`;
       }).join('')}<h2>管理员操作留痕</h2>${s.audit.slice().reverse().map(a => `<p class="small muted">${fmt(a.at)} ${e(M.user(s, a.userId).nickname)}：${e(a.operation)}，${e(a.reason)}</p>`).join('') || '<p class="small muted">暂无用户管理操作。</p>'}`;
     } else if (tab === 'overview') {
       const submitted = s.submissions.filter(x => x.submittedAt), approved = submitted.filter(x => x.status === 'approved'), rejected = submitted.filter(x => x.history.some(h => h.action === '拒绝')), appeals = submitted.filter(x => x.history.some(h => h.action === '申诉')), reviewed = submitted.filter(x => x.history.some(h => ['通过', '拒绝', '管理员裁决'].includes(h.action))), completed = s.tasks.filter(t => t.status === 'closed' && M.approved(s, t) > 0).length;

@@ -31,7 +31,7 @@
     M.entry(s, 'u20', M.toUnits(2900), 0, 'adjust', '研究者大样本演示启动额度', null, null, '演示系统');
     samples.forEach((a, i) => {
       const t = { id: 'sample-' + i, publisherId: 'u' + (i + 4), title: a[0], topic: a[1], minutes: a[2], reward: M.toUnits(a[3]), quota: a[4], audience: [a[5]], audienceText: a[5], description: a[6], link: 'https://surveys.example/campus/' + (i + 1), status: 'open', escrow: M.toUnits(a[3]) * a[4], createdAt: timestamp - (i + 1) * 2 * M.HOUR, deadline: timestamp + (3 + i % 5) * M.DAY, stopped: false, removalReason: '', reports: [] };
-      s.tasks.push(t); M.entry(s, t.publisherId, -t.escrow, t.escrow, 'freeze', '发布问卷，冻结招募预算', t.id, null, `任务 ${t.id}`);
+      s.tasks.push(t); M.entry(s, t.publisherId, -t.escrow, t.escrow, 'freeze', '发布问卷，冻结招募预算', t.id, null, '平台托管');
       // Sample researchers answered one another. Every visible completion is backed by a real ledger transfer.
       for (let j = 0; j < i % 4; j++) {
         const responder = 'u' + (((i + j + 1) % samples.length) + 4);
