@@ -19,27 +19,31 @@
 <body>
   <a class="skip" href="#main">跳到主要内容</a>
   <div class="entry" id="entry" hidden>
-    <div class="entry-inner">
-      <div class="entry-frag" aria-hidden="true">
-        <span class="entry-frag-label">研究记录 / 01</span>
-        <div class="entry-checks"><span class="entry-box"></span><span class="entry-box entry-box--on"></span><span class="entry-box"></span></div>
-        <span class="entry-rule"></span><span class="entry-rule entry-rule--short"></span>
-        <span class="entry-scale"><i></i><i></i><i class="on"></i><i></i><i></i></span>
-        <span class="entry-frag-caption">每一份回答，都让研究更进一步。</span>
-      </div>
-      <section class="entry-panel glass-panel" role="dialog" aria-modal="true" aria-labelledby="entry-title" aria-describedby="entry-fine">
+    <section class="entry-inner" role="dialog" aria-modal="true" aria-labelledby="entry-title" aria-describedby="entry-fine">
+      <header class="entry-header">
+        <span class="entry-signature" aria-hidden="true"><span class="brand-mark">问</span>问问</span>
         <button type="button" class="theme-toggle entry-theme" aria-label="切换夜间模式">夜间模式</button>
-        <p class="entry-brand">问问<span>校园问卷互助</span></p>
-        <h1 class="entry-title" id="entry-title"><span class="entry-title-line">答别人的问卷，</span><span class="entry-title-line">换自己的样本。</span></h1>
-        <p class="entry-note">从一份回答开始，让校园研究相互支持。<br>大厅已备好 16 份示例问卷，供你体验完整流程。</p>
+      </header>
+      <div class="entry-panel">
+        <h1 class="entry-title" id="entry-title">
+          <span class="entry-wordmark">问问</span>
+          <span class="entry-subtitle">校园问卷互助</span>
+        </h1>
+        <p class="entry-note">填同学的问卷赚积分，再用积分发布自己的问卷。</p>
         <div class="entry-actions">
-          <button type="button" class="btn entry-enter" id="entry-enter">进去看看</button>
+          <button type="button" class="btn entry-enter" id="entry-enter">
+            进入问卷大厅
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+          </button>
           <button type="button" class="entry-alt" id="entry-alt" data-action="account">换个身份</button>
         </div>
         <p class="entry-identity" id="entry-identity">默认以小林的演示身份进入</p>
-        <p class="entry-fine" id="entry-fine">演示环境，无需密码。数据只存在这台电脑。</p>
-      </section>
-    </div>
+      </div>
+      <div class="entry-collage" aria-hidden="true" inert>
+        <div class="entry-deck" id="entry-deck"></div>
+      </div>
+      <p class="entry-fine" id="entry-fine">演示环境 · 无需密码 · 数据仅保存在当前浏览器</p>
+    </section>
   </div>
   <div class="demo-banner"><span>演示环境</span> 示例账号与积分，仅保存在当前浏览器 <button type="button" data-action="guide">查看演示指南</button></div>
   <header class="header"><div class="header-inner">
@@ -63,6 +67,8 @@
     var entry = document.getElementById('entry');
     var enter = document.getElementById('entry-enter');
     var alternate = document.getElementById('entry-alt');
+    var theme = entry.querySelector('.entry-theme');
+    var deck = document.getElementById('entry-deck');
     var key = 'campus-helper-entry';
     function syncTheme() {
       var dark = document.documentElement.dataset.theme === 'dark';
@@ -91,7 +97,8 @@
       }).map(function (el) { var previous = el.inert; el.inert = true; return [el, previous]; });
       var name = document.querySelector('#account-toggle .avatar');
       var label = name && name.nextSibling ? name.nextSibling.textContent.trim() : '小林';
-      document.getElementById('entry-identity').textContent = '以' + label + '的演示身份进入，也可以换个身份';
+      document.getElementById('entry-identity').textContent = '以「' + label + '」的演示身份进入';
+      entry.dispatchEvent(new Event('entry:show'));
       entry.hidden = false;
       document.body.classList.add('entry-open');
       enter.focus({ preventScroll: true });
@@ -100,6 +107,7 @@
       try { localStorage.setItem(key, 'done'); } catch (_) { /* Temporary mode still permits entry. */ }
       if (location.hash === '#entry') history.replaceState(null, '', '#hall');
       entry.hidden = true;
+      deck.replaceChildren();
       document.body.classList.remove('entry-open');
       background.forEach(function (item) { item[0].inert = item[1]; });
       background = [];
@@ -112,20 +120,9 @@
     entry.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); }
       if (event.key === 'Tab') {
-        if (event.shiftKey && document.activeElement === entry.querySelector('button')) { event.preventDefault(); alternate.focus(); }
-        else if (!event.shiftKey && document.activeElement === alternate) { event.preventDefault(); entry.querySelector('button').focus(); }
+        if (event.shiftKey && document.activeElement === theme) { event.preventDefault(); alternate.focus(); }
+        else if (!event.shiftKey && document.activeElement === alternate) { event.preventDefault(); theme.focus(); }
       }
-    });
-    var letterIndex = 0;
-    entry.querySelectorAll('.entry-title-line').forEach(function (line) {
-      var text = line.textContent;
-      line.textContent = '';
-      Array.from(text).forEach(function (letter) {
-        var span = document.createElement('span');
-        span.textContent = letter;
-        span.style.setProperty('--letter-delay', Math.min(letterIndex++, 11) * 40 + 'ms');
-        line.appendChild(span);
-      });
     });
     function returnToEntry() {
       try { localStorage.removeItem(key); } catch (_) {}

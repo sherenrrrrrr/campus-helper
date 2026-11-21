@@ -199,17 +199,30 @@
     const q = M.stats(state, t), mine = t.publisherId === state.currentUserId;
     return `<article class="survey-card compact-card"><img class="card-photo" src="${campusArt(t)}" alt="" width="160" height="180" loading="lazy"><div class="card-content"><h3><a href="#detail/${e(t.id)}">${e(t.title)}</a></h3><div class="card-meta"><span>${icon('clock')}预计 ${t.minutes} 分钟</span><span class="reward">${icon('wallet')}+${fp(t.reward)}<small> 积分</small></span></div><div class="progress-row"><span>已收 ${q.approved} / ${t.quota} 份</span><span>${q.remaining ? `剩 ${q.remaining} 份可领` : taskNames[t.status][0]}</span></div><progress value="${q.approved}" max="${t.quota}" aria-label="已收 ${q.approved} 份，共 ${t.quota} 份"></progress><div class="card-bottom"><span class="tag">${e(t.audience[0] || '全校同学')}</span>${mine ? '<span class="small muted">我发布的</span>' : ''}<a class="card-link" href="#detail/${e(t.id)}">看看问卷 ${icon('arrow')}</a></div></div></article>`;
   }
+  const isRecruiting = t => t.status === 'open' && M.remaining(state, t) > 0;
+  const compareHallTasks = (a, b) => M.remaining(state, b) - M.remaining(state, a)
+    || b.reward - a.reward || b.createdAt - a.createdAt;
+
+  $('#entry').addEventListener('entry:show', () => {
+    $('#entry-deck').innerHTML = state.tasks
+      .filter(t => M.taskType(t) === 'survey' && isRecruiting(t))
+      .sort(compareHallTasks)
+      .slice(0, 6)
+      .map(card)
+      .join('');
+  });
+
   function hall({ name, query }) {
     const u = M.user(state), experiment = name === 'experiment';
     const type = experiment ? 'experiment' : 'survey', kind = experiment ? '实验' : '问卷';
     const search = query.get('q') || '', topic = query.get('topic') || '', audience = query.get('audience') || '', duration = query.get('duration') || '', ended = query.get('ended') === '1';
     const list = state.tasks.filter(t => M.taskType(t) === type
-      && (ended || (t.status === 'open' && M.remaining(state, t) > 0))
+      && (ended || isRecruiting(t))
       && (!topic || t.topic === topic)
       && (!audience || t.audience.includes(audience))
       && (!search || (t.title + t.description).includes(search))
       && (!duration || (duration === '3' ? t.minutes <= 3 : duration === '5' ? t.minutes > 3 && t.minutes <= 5 : t.minutes > 5)));
-    list.sort((a, b) => M.remaining(state, b) - M.remaining(state, a) || b.reward - a.reward || b.createdAt - a.createdAt);
+    list.sort(compareHallTasks);
     return `<section class="welcome watercolor-welcome"><div class="welcome-copy"><h1>让互助在<br>校园里流动。</h1><p>答问卷、赴实验，用积分发出你自己的招募。</p></div><img class="welcome-art" src="assets/campus-watercolor-hero.webp" width="1000" height="620" alt="校园亭台与湖面的水彩画"></section><section class="wallet-inline" aria-label="我的积分概览"><a class="wallet-available wallet-balance" href="#points"><span>可用积分</span><strong class="number">${fp(u.available)}<span> 分</span></strong></a><a class="btn wallet-publish publish-link" href="#publish">发布 ${icon('arrow')}</a></section>
       <div class="board-layout"><section aria-labelledby="hall-title"><div class="discovery-toolbar"><div><h2 id="hall-title">发现${kind}</h2>${experiment ? '<p class="small muted">约好一个时段，到场完成一次研究</p>' : ''}</div><label class="search">${icon('search')}<input form="filter-form" name="q" type="search" value="${e(search)}" placeholder="搜索${kind}" aria-label="搜索${kind}标题或说明" autocomplete="off"></label></div>
       <div class="filter-tools"><form class="filters" id="filter-form"><select name="topic" aria-label="筛选主题">${options(S.TOPICS, topic, '所有主题')}</select><select name="audience" aria-label="筛选目标人群">${options(S.AUDIENCES, audience, '所有人群')}</select><select name="duration" aria-label="筛选预计耗时"><option value="">不限耗时</option><option value="3" ${duration === '3' ? 'selected' : ''}>3 分钟以内</option><option value="5" ${duration === '5' ? 'selected' : ''}>3～5 分钟</option><option value="more" ${duration === 'more' ? 'selected' : ''}>5 分钟以上</option></select><button type="submit" class="btn secondary">筛选</button><label class="checkbox"><input type="checkbox" name="ended" value="1" ${ended ? 'checked' : ''}>包含已满、已结束和已下架</label></form></div>
