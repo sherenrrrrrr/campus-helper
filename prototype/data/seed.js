@@ -1,5 +1,8 @@
 (function (root) {
   const M = typeof module !== 'undefined' && module.exports ? require('./points.js') : root.CampusModel;
+  // 换成你自己的问卷星测试问卷，核对流程才能真跑；占位地址仅用于本地演示，禁止外跳或真实填写。
+  const DEMO_WJX_URL = 'https://www.wjx.cn/vm/REPLACE_ME.aspx';
+  const SOURCE_DEMO_TITLE = '【示例】来源编号核对（请勿真实填写）';
   const TOPICS = ['校园生活', '学习研究', '实习就业', '消费习惯', '身心健康'];
   const AUDIENCES = ['全校同学', '大一', '大二', '大三', '大四', '研究生', '有实习经历', '计算机学院', '经管学院'];
   const samples = [
@@ -31,7 +34,7 @@
     M.entry(s, 'u20', M.toUnits(2900), 0, 'adjust', '研究者大样本演示启动额度', null, null, '演示系统');
     samples.forEach((a, i) => {
       const t = { id: 'sample-' + i, publisherId: 'u' + (i + 4), title: a[0], topic: a[1], minutes: a[2], reward: M.toUnits(a[3]), quota: a[4], audience: [a[5]], audienceText: a[5], description: a[6], link: 'https://surveys.example/campus/' + (i + 1), status: 'open', escrow: M.toUnits(a[3]) * a[4], createdAt: timestamp - (i + 1) * 2 * M.HOUR, deadline: timestamp + (3 + i % 5) * M.DAY, stopped: false, removalReason: '', reports: [] };
-      s.tasks.push(t); M.entry(s, t.publisherId, -t.escrow, t.escrow, 'freeze', '发布问卷，冻结招募预算', t.id, null, '平台托管');
+      s.tasks.push(t); M.entry(s, t.publisherId, -t.escrow, t.escrow, 'freeze', '发布问卷，支出招募预算', t.id, null, '平台托管');
       // Sample researchers answered one another. Every visible completion is backed by a real ledger transfer.
       for (let j = 0; j < i % 4; j++) {
         const responder = 'u' + (((i + j + 1) % samples.length) + 4);
@@ -53,7 +56,45 @@
     M.entry(s, id, M.toUnits(2900), 0, 'adjust', '研究者演示额度补足至 3000 分', null, null, '演示系统初始化');
     M.assertState(s); return s;
   }
-  const api = { seed, withResearcher, TOPICS, AUDIENCES };
+  function isSourceDemoUrl(link) {
+    try {
+      const url = new URL(link);
+      return /(^|\.)wjx\.cn\.?$/i.test(url.hostname) && /^\/vm\/REPLACE_ME\.aspx\/?$/i.test(url.pathname);
+    } catch { return false; }
+  }
+  // UI opt-in only: keep seed()'s 16 original samples and all their balances unchanged.
+  // Never mint points to install a sample into a previously used browser state.
+  function withSourceDemo(previous) {
+    let s = M.migrateState(previous);
+    const existing = s.tasks.find(t => t.isSourceDemo || (t.publisherId === 'u1' && t.title === SOURCE_DEMO_TITLE && (t.link === DEMO_WJX_URL || isSourceDemoUrl(t.link))));
+    if (existing) {
+      existing.isSourceDemo = true;
+      existing.sourceDemoOnly = isSourceDemoUrl(existing.link);
+      return s;
+    }
+    const publisher = s.users.find(u => u.id === 'u1');
+    if (!publisher || publisher.banned || publisher.restrictedUntil > s.now || publisher.available < M.toUnits(80)) return s;
+    // Respect an existing task using the configured link instead of bypassing duplicate-link validation.
+    const normalized = M.normalizeLink(DEMO_WJX_URL);
+    if (s.tasks.some(t => {
+      if (M.taskType(t) !== 'survey') return false;
+      try { return M.normalizeLink(t.link) === normalized; } catch { return false; }
+    })) return s;
+    const currentUserId = s.currentUserId;
+    s.currentUserId = publisher.id;
+    s = M.commit(s, { type: 'publish', input: {
+      type: 'survey', title: SOURCE_DEMO_TITLE, topic: '学习研究', minutes: 3,
+      audience: ['全校同学'], audienceText: '仅限本地演示，不收集真实答案',
+      description: '体验领取、提交演示证明和粘贴来源编号核对。占位问卷只在本地演示，请勿真实填写或提交任何个人信息。',
+      link: DEMO_WJX_URL, reward: 10, quota: 8, days: 7, codeRequired: true, codeMode: 'url'
+    } }, s.now);
+    const task = s.tasks.at(-1);
+    task.isSourceDemo = true;
+    task.sourceDemoOnly = isSourceDemoUrl(task.link);
+    s.currentUserId = currentUserId;
+    M.assertState(s); return s;
+  }
+  const api = { seed, withResearcher, withSourceDemo, isSourceDemoUrl, DEMO_WJX_URL, TOPICS, AUDIENCES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.CampusSeed = api;
 })(globalThis);

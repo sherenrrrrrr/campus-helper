@@ -88,7 +88,7 @@ main { max-width: 1248px; padding: 40px 32px 64px; margin: auto; min-height: cal
 .search input { padding-left: 40px; }
 .filters select { flex: 1; min-width: 120px; font-size: 14px; }
 .filters .checkbox { font-size: 12px; }
-.result-info { font-size: 12px; display: flex; justify-content: space-between; color: var(--muted); gap: 12px; margin-bottom: 16px; }
+.result-info { font-size: 12px; display: flex; justify-content: flex-start; color: var(--muted); gap: 12px; margin-bottom: 16px; }
 .survey-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
 .survey-card { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; transition: transform .3s var(--ease), border-color .3s var(--ease); display: flex; flex-direction: column; align-items: stretch; }
 .survey-card:hover { transform: translateY(-2px); border-color: var(--green); }
@@ -491,7 +491,7 @@ main { padding-top: 16px; }
   .topic-chips a { min-height: 44px; }
   .filter-details { margin-bottom: 4px; }
   .filter-details > summary { min-height: 44px; padding: 4px 0; font-size: 12px; }
-  .filter-details .filters { padding: 12px; }
+  .filter-details .filters, .filter-panel .filters { padding: 12px; }
   .result-info { margin-bottom: 8px; font-size: 12px; }
   .compact-grid { grid-template-columns: minmax(0,1fr); gap: 12px; }
   .compact-card { grid-template-columns: 88px minmax(0,1fr); gap: 12px; padding: 12px; border-radius: var(--radius); }
@@ -921,3 +921,12 @@ html:not([data-theme="dark"]) .mobile-nav a[aria-current="page"] { background: r
   overflow-wrap: anywhere;
 }
 .detail-head h1 { overflow-wrap: anywhere; }
+
+/* H: visible filters remain associated with the header search through filter-form. */
+.filter-tools > .filter-panel { flex-basis: 100%; order: 2; }
+.filter-tools > .filter-panel .filters { margin: 0; }
+
+/* H: public balances show available and income only; escrow remains an internal ledger pocket. */
+.wallet-inline { grid-template-columns: minmax(0,1fr) auto; }
+.balance-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.result-info { justify-content: flex-start; }

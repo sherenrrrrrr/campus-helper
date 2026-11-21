@@ -113,6 +113,35 @@
   function canReviewCode(t, x) {
     return x.codeAttached === true && !!x.code && supportsSurveyCode(t.link);
   }
+  function parseSourceTokens(text) {
+    let normalized = String(text ?? '').toUpperCase();
+    try { normalized = decodeURIComponent(normalized); } catch { /* A malformed percent sequence must not discard readable tokens. */ }
+    normalized = normalized.toUpperCase();
+    const pattern = /\b[A-Z0-9]{1,4}-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}\b/g;
+    const counts = new Map();
+    for (const match of normalized.matchAll(pattern)) counts.set(match[0], (counts.get(match[0]) || 0) + 1);
+    const unrecognizedLines = normalized.split(/\r\n|\r|\n/).filter(line => line.trim() && !new RegExp(pattern.source).test(line)).length;
+    return { tokens: [...counts].map(([token, count]) => ({ token, count })), unrecognizedLines };
+  }
+  function matchSources(s, taskId, text) {
+    const t = task(s, taskId), actor = user(s), parsed = parseSourceTokens(text);
+    const result = { matched: [], foreign: [], missing: [], unrecognizedLines: parsed.unrecognizedLines };
+    if (actor.banned || (actor.id !== t.publisherId && actor.role !== 'admin')) return { ...result, reason: '只有本任务发布者或管理员可以查看来源核对结果。' };
+    if (taskType(t) !== 'survey' || !supportsSurveyCode(t.link)) return { ...result, reason: '仅支持传参的问卷任务可以核对来源编号。' };
+    const records = new Map();
+    for (const x of taskSubs(s, taskId).filter(x => canReviewCode(t, x))) {
+      const token = x.sourceToken;
+      if (!token || token !== submissionToken(t.id, x.code)) continue;
+      if (!records.has(token)) records.set(token, { submissionId: x.id, nickname: user(s, x.userId).nickname, token });
+    }
+    const present = new Set();
+    for (const { token, count } of parsed.tokens) {
+      if (records.has(token)) { result.matched.push({ ...records.get(token), count }); present.add(token); }
+      else result.foreign.push({ token, count });
+    }
+    result.missing = [...records].filter(([token]) => !present.has(token)).map(([, record]) => record);
+    return result;
+  }
   function isReserved(x, at) {
     return ['locked', 'pending', 'correction', 'appealed'].includes(x.status) || (x.status === 'rejected' && !x.final && at < x.appealUntil);
   }
@@ -134,11 +163,14 @@
       submittedCount: entries.filter(x => x.submittedAt != null).length,
       pendingCount: entries.filter(x => x.status === 'pending').length,
       correctionCount: entries.filter(x => x.status === 'correction').length,
-      dirtyCount: entries.filter(hasDirtyData).length };
+      dirtyCount: entries.filter(hasDirtyData).length,
+      pasteMatchedCount: entries.filter(x => canReviewCode(t, x) && x.codeVerifiedBy === 'paste' && x.codeVerified === true).length };
+    result.pasteMissingCount = Math.max(0, result.claimedCount - result.pasteMatchedCount);
     if (taskType(t) === 'experiment') result.reason = '实验必须逐条输入到场码核销，不能批量通过。';
     else if (result.correctionCount) result.reason = '还有待补正记录，不能一键通过。';
     else if (result.dirtyCount) result.reason = '任务曾有未按要求填写的脏数据，不能一键通过，请逐条审核。';
     else if (result.submittedCount < result.claimedCount) result.reason = '已提交数尚未达到领取数，不能一键通过。';
+    else if (supportsSurveyCode(t.link) && result.pasteMissingCount) result.reason = `还有 ${result.pasteMissingCount} 位领取者的来源编号没有在核对台匹配，不能一键通过。`;
     else if (!result.pendingCount) result.reason = '没有待审核的提交，无需一键通过。';
     else { result.eligible = true; result.reason = '已提交数达到领取数，且无脏数据或待补正记录，可以通过全部待审核提交。'; }
     return result;
@@ -300,9 +332,9 @@
     ensure(total === expected, '积分守恒校验失败，操作未保存。');
     for (const u of s.users) {
       ensure(Number.isSafeInteger(u.available) && Number.isSafeInteger(u.frozen) && u.available >= 0 && u.frozen >= 0, '余额校验失败。');
-      ensure(u.frozen === s.tasks.filter(t => t.publisherId === u.id).reduce((sum, t) => sum + t.escrow, 0), '任务冻结余额校验失败。');
+      ensure(u.frozen === s.tasks.filter(t => t.publisherId === u.id).reduce((sum, t) => sum + t.escrow, 0), '任务预算余额校验失败。');
       ensure(u.available === s.ledger.filter(x => x.userId === u.id).reduce((sum, x) => sum + x.availableDelta, 0), '可用积分流水校验失败。');
-      ensure(u.frozen === s.ledger.filter(x => x.userId === u.id).reduce((sum, x) => sum + x.frozenDelta, 0), '冻结积分流水校验失败。');
+      ensure(u.frozen === s.ledger.filter(x => x.userId === u.id).reduce((sum, x) => sum + x.frozenDelta, 0), '招募预算流水校验失败。');
     }
     ensure(new Set(s.submissions.map(x => `${x.taskId}:${x.userId}`)).size === s.submissions.length, '重复领取校验失败。');
     for (const t of s.tasks) {
@@ -400,6 +432,8 @@
       x.code ??= x.completionCode;
       x.codeAttached ??= false;
       x.codeVerified ??= false;
+      x.codeVerifiedBy ??= null;
+      x.sourceMatchedAt ??= null;
       x.correctionUsed ??= 0;
       x.codeMissingAt ??= null;
       x.correctedAt ??= null;
@@ -420,7 +454,7 @@
       const t = { id: uid(s, 't'), publisherId: actor.id, type: experiment ? 'experiment' : 'survey', title: i.title.trim(), description: i.description.trim(), topic: i.topic || '学习研究', audienceText: String(i.audienceText || i.requirements || '全校同学').trim(), audience: [...new Set(i.audience || ['全校同学'])], minutes: experiment ? +i.slots[0].minutes : +i.minutes, link: experiment ? '' : i.link.trim(), reward: toUnits(i.reward), quota, status: 'open', escrow: toUnits(i.reward) * quota, createdAt: s.now, deadline: s.now + +i.days * DAY, stopped: false, removalReason: '', reports: [] };
       Object.assign(t, completionSettings(i), { codeSupported: supportsSurveyCode(t.link) });
       if (experiment) Object.assign(t, { format: i.format, location: i.location.trim(), slots: i.slots.map(slot => ({ id: uid(s, 'slot'), startAt: new Date(slotStartAt(slot)).toISOString(), minutes: +slot.minutes, capacity: +slot.capacity, booked: [], closed: false })), requirements: String(i.requirements || '').trim().slice(0, 1500), cashNote: String(i.cashNote || '').trim().slice(0, 200), ethicsConfirmed: true, publicPlaceConfirmed: true, privacyConfirmed: true, codeRequired: false, codeMode: 'none', codeSupported: false });
-      entry(s, actor.id, -t.escrow, t.escrow, 'freeze', experiment ? '发布实验，冻结招募预算' : '发布问卷，冻结招募预算', t.id, null, '平台托管'); s.tasks.push(t);
+      entry(s, actor.id, -t.escrow, t.escrow, 'freeze', experiment ? '发布实验，支出招募预算' : '发布问卷，支出招募预算', t.id, null, '平台托管'); s.tasks.push(t);
     } else if (action.type === 'editTask') {
       active(); editSurveyTask(s, task(s, action.taskId), action.input || {});
     } else if (action.type === 'claim') {
@@ -469,14 +503,25 @@
       if (publisherRisk(s, t.publisherId).high) payout(s, t, x, '高风险发布者保护，自动通过', true);
       else notice(s, t.publisherId, `「${t.title}」有一份新证明等待审核。`, { taskId: t.id, href: `review/${t.id}` });
       updateTask(s, t);
+    } else if (action.type === 'verifySources') {
+      active(); const t = task(s, action.taskId);
+      ensure(t.publisherId === actor.id || actor.role === 'admin', '只有本任务发布者或管理员可以核对来源。');
+      ensure(taskType(t) === 'survey' && supportsSurveyCode(t.link), '仅支持传参的问卷任务可以核对来源编号。');
+      const result = matchSources(s, t.id, action.text);
+      for (const match of result.matched) {
+        const x = sub(s, match.submissionId);
+        if (x.codeVerified === true && x.codeVerifiedBy === 'paste') continue;
+        x.codeVerified = true; x.codeVerifiedBy = 'paste'; x.sourceMatchedAt = s.now;
+        record(s, x, '来源核对', `粘贴核对匹配到 ${match.token}`);
+      }
     } else if (action.type === 'verifyCode') {
       active(); const x = sub(s, action.submissionId), t = task(s, x.taskId);
       ensure(taskType(t) === 'survey', '实验预约请使用到场码核销，不走问卷提交和审核流程。');
       ensure(t.publisherId === actor.id && x.status === 'pending', '只能核对自己任务中待审核提交的完成码。');
       ensure(canReviewCode(t, x), '这份记录没有通过链接传递的编号。');
       ensure(typeof action.verified === 'boolean', '请明确设置完成码是否已核对。');
-      if (x.codeVerified !== action.verified) {
-        x.codeVerified = action.verified;
+      if (x.codeVerified !== action.verified || x.codeVerifiedBy !== 'manual') {
+        x.codeVerified = action.verified; x.codeVerifiedBy = 'manual'; x.sourceMatchedAt = null;
         record(s, x, '编号核对', action.verified ? '发布者确认来源编号一致' : '发布者取消编号核对标记');
       }
     } else if (action.type === 'correctCode') {
@@ -491,7 +536,7 @@
         x.screenshot = action.screenshot;
       }
       x.note = note; x.correctedAt = s.now; x.reviewUntil = s.now + RULES.reviewHours * HOUR;
-      x.codeVerified = false; x.reminded = []; x.status = 'pending';
+      x.codeVerified = false; x.codeVerifiedBy = null; x.sourceMatchedAt = null; x.reminded = []; x.status = 'pending';
       record(s, x, '补充编号说明', note);
       if (publisherRisk(s, t.publisherId).high) payout(s, t, x, '高风险发布者保护，补正后自动通过', true);
       else notice(s, t.publisherId, `「${t.title}」有一份完成码补正，已重新开始 48 小时审核。`, { taskId: t.id, href: `review/${t.id}` });
@@ -515,7 +560,7 @@
         const reason = label + (action.note ? `：${String(action.note).trim().slice(0, 300)}` : '');
         if (action.reason === '码对不上' && x.correctionUsed === 0) {
           ensure(canReviewCode(t, x), '这份记录没有通过链接传递的编号，不能以找不到编号要求补正。');
-          x.status = 'correction'; x.correctionUsed = 1; x.codeMissingAt = s.now; x.codeVerified = false;
+          x.status = 'correction'; x.correctionUsed = 1; x.codeMissingAt = s.now; x.codeVerified = false; x.codeVerifiedBy = null; x.sourceMatchedAt = null;
           x.reviewUntil = null;
           record(s, x, '要求补正编号', reason);
           notice(s, x.userId, `「${t.title}」找不到你的提交编号。请补充说明，补正期间名额和奖励保留，审核计时暂停。`, { taskId: t.id, href: `detail/${t.id}` });
@@ -624,7 +669,7 @@
     s.version = 3;
     assertState(s); return s;
   }
-  const api = { SCALE, toUnits, toPoints, fmtPoints, migrateState, RULES, REASONS, HOUR, DAY, clone, user, task, sub, taskSubs, stats, remaining, approved, normalizeLink, platform, validatePublish, publisherRisk, firstProtected, isReserved, assertState, commit, entry, hasDirtyData, batchApprovalEligibility, supportsSurveyCode, withCode, surveyLaunchUrl, canReviewCode, taskCode, submissionToken, taskType, slotStartAt, slotEndAt, slotRemaining };
+  const api = { SCALE, toUnits, toPoints, fmtPoints, migrateState, RULES, REASONS, HOUR, DAY, clone, user, task, sub, taskSubs, stats, remaining, approved, normalizeLink, platform, validatePublish, publisherRisk, firstProtected, isReserved, assertState, commit, entry, hasDirtyData, batchApprovalEligibility, parseSourceTokens, matchSources, supportsSurveyCode, withCode, surveyLaunchUrl, canReviewCode, taskCode, submissionToken, taskType, slotStartAt, slotEndAt, slotRemaining };
   api.unreadCount = unreadCount;
   Object.assign(api, { taskEditValues, validateTaskEdit });
   Object.assign(api, { VERDICTS, verdictLabel });

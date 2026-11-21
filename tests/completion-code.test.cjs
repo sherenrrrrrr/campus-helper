@@ -106,8 +106,8 @@ test('publisher-only code verification accepts booleans only for pending records
   assert.throws(() => f.apply({ type: 'verifyCode', submissionId: id, verified: false }));
 });
 
-test('batch review may approve unverified clean submissions, transfers each reward exactly once', () => {
-  const f = fixture(), taskId = f.publish(), a = f.claim(taskId, 'u2'), b = f.claim(taskId, 'u3');
+test('batch review may approve unverified clean submissions on unsupported platforms, transfers each reward exactly once', () => {
+  const f = fixture(), taskId = f.publish('u1', { link: 'https://surveys.example/legacy-batch' }), a = f.claim(taskId, 'u2'), b = f.claim(taskId, 'u3');
   f.as('u1'); f.apply({ type: 'approveAll', taskId });
   assert.equal(M.sub(f.state, a).status, 'approved'); assert.equal(M.sub(f.state, b).status, 'approved');
   assert.equal(M.user(f.state, 'u2').available, M.toUnits(110)); assert.equal(M.user(f.state, 'u3').available, M.toUnits(110));
