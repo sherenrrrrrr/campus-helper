@@ -21,15 +21,16 @@
     ['毕业季，你会怎样处理闲置书籍', '校园生活', 3, 10, 8, '大四', '捐赠、转卖还是带走？希望了解毕业生处理教材和课外书的方式。']
   ];
   function seed(timestamp = Date.now()) {
-    const s = { version: 2, sequence: 0, now: timestamp, timeOffset: 0, currentUserId: 'u1', users: [], tasks: [], submissions: [], ledger: [], notices: [], audit: [] };
-    const names = ['小林', '阿哲', '管理员', '许嘉宁', '陈沐', '周雨晴', '陆言', '沈悦', '林可', '吴桐', '郑一凡', '江晴', '顾然', '程语', '苏禾', '方知', '何安', '叶青', '赵予'];
+    const s = { version: 3, sequence: 0, now: timestamp, timeOffset: 0, currentUserId: 'u1', users: [], tasks: [], submissions: [], ledger: [], notices: [], audit: [] };
+    const names = ['小林', '阿哲', '管理员', '许嘉宁', '陈沐', '周雨晴', '陆言', '沈悦', '林可', '吴桐', '郑一凡', '江晴', '顾然', '程语', '苏禾', '方知', '何安', '叶青', '赵予', '研究者'];
     names.forEach((nickname, i) => {
       const id = 'u' + (i + 1), createdAt = timestamp - (16 + i) * M.DAY;
       s.users.push({ id, nickname, role: i === 2 ? 'admin' : 'user', available: 0, frozen: 0, createdAt, lastActiveAt: timestamp - (i % 5) * M.DAY, banned: false, violations: 0, restrictedUntil: null, sample: i > 2 });
-      M.entry(s, id, 100, 0, 'grant', '新用户启动积分', null, null, '演示系统'); s.ledger[s.ledger.length - 1].createdAt = createdAt;
+      M.entry(s, id, M.RULES.grant, 0, 'grant', '新用户启动积分', null, null, '演示系统'); s.ledger[s.ledger.length - 1].createdAt = createdAt;
     });
+    M.entry(s, 'u20', M.toUnits(2900), 0, 'adjust', '研究者大样本演示启动额度', null, null, '演示系统');
     samples.forEach((a, i) => {
-      const t = { id: 'sample-' + i, publisherId: 'u' + (i + 4), title: a[0], topic: a[1], minutes: a[2], reward: a[3], quota: a[4], audience: [a[5]], audienceText: a[5], description: a[6], link: 'https://surveys.example/campus/' + (i + 1), status: 'open', escrow: a[3] * a[4], createdAt: timestamp - (i + 1) * 2 * M.HOUR, deadline: timestamp + (3 + i % 5) * M.DAY, stopped: false, removalReason: '', reports: [] };
+      const t = { id: 'sample-' + i, publisherId: 'u' + (i + 4), title: a[0], topic: a[1], minutes: a[2], reward: M.toUnits(a[3]), quota: a[4], audience: [a[5]], audienceText: a[5], description: a[6], link: 'https://surveys.example/campus/' + (i + 1), status: 'open', escrow: M.toUnits(a[3]) * a[4], createdAt: timestamp - (i + 1) * 2 * M.HOUR, deadline: timestamp + (3 + i % 5) * M.DAY, stopped: false, removalReason: '', reports: [] };
       s.tasks.push(t); M.entry(s, t.publisherId, -t.escrow, t.escrow, 'freeze', '发布问卷，冻结招募预算', t.id, null, `任务 ${t.id}`);
       // Sample researchers answered one another. Every visible completion is backed by a real ledger transfer.
       for (let j = 0; j < i % 4; j++) {

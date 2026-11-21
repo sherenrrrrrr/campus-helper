@@ -37,7 +37,7 @@ async function run() {
         throw error;
       });
       let s = await read(), taskId = s.tasks.at(-1).id;
-      assert.equal(M.user(s, 'u1').available, 20); assert.equal(M.user(s, 'u1').frozen, 80);
+      assert.equal(M.user(s, 'u1').available, M.toUnits(20)); assert.equal(M.user(s, 'u1').frozen, M.toUnits(80));
       await goto('publish'); await page.locator('[name="quota"]').fill('20'); assert.equal(await page.getByRole('button', { name: '确认发布问卷' }).isDisabled(), true);
       await switchTo('u2'); await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await page.getByRole('heading', { name: '已为你保留一个名额' }).waitFor();
       await page.locator('dialog [data-action="open-survey"]').click(); await page.getByRole('heading', { name: '示例问卷页面', exact: true }).waitFor();
@@ -49,7 +49,7 @@ async function run() {
       await page.locator('dialog [name="reason"]').selectOption('截图不清晰'); await submitDialog();
       s = await read(); assert.equal(M.sub(s, submissionId).status, 'appealed');
       await switchTo('u3'); await goto('admin'); await click('judge'); await page.locator('[name="verdict"]').selectOption('win'); await page.locator('dialog textarea[name="reason"]').fill('完成提示清楚，裁决发放'); await submitDialog();
-      s = await read(); assert.equal(M.user(s, 'u2').available, 110); assert.equal(M.user(s, 'u1').frozen, 70); M.assertState(s);
+      s = await read(); assert.equal(M.user(s, 'u2').available, M.toUnits(110)); assert.equal(M.user(s, 'u1').frozen, M.toUnits(70)); M.assertState(s);
       // Second responder can be rejected normally, appeal, then receive a reasoned ruling.
       await goto('detail/' + taskId); await page.locator('#eligible').check(); await click('claim'); await click('close'); await click('proof'); await click('sample-proof'); await page.locator('[name="privacy"]').check(); await submitDialog();
       const secondId = (await read()).submissions.at(-1).id;
@@ -69,7 +69,7 @@ async function run() {
       const autoId = (await read()).submissions.at(-1).id;
       await click('account'); await click('time'); await page.locator('dialog [name="hours"]').selectOption('49'); await submitDialog();
       s = await read(); assert.equal(M.sub(s, autoId).automatic, true); M.assertState(s);
-      await click('account'); await click('reset'); await submitDialog(); s = await read(); assert.equal(M.user(s, 'u1').available, 100); assert.equal(s.tasks.length, 16);
+      await click('account'); await click('reset'); await submitDialog(); s = await read(); assert.equal(M.user(s, 'u1').available, M.toUnits(100)); assert.equal(s.tasks.length, 16);
       assert.deepEqual(errors, []); console.log(`${mobile ? '390px mobile' : '1440px desktop'}: full workflow, routes, persistence, reset and no page errors passed`);
       await context.close();
     }

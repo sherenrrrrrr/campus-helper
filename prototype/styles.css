@@ -883,3 +883,12 @@ html:not([data-theme="dark"]) .mobile-nav a[aria-current="page"] { background: r
   .account-toggle .avatar { width: 28px; height: 28px; }
   .account-area { gap: 2px; }
 }
+/* Survey titles retain their complete accessible text while cards stay two lines. */
+.survey-card h3 a {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.detail-head h1 { overflow-wrap: anywhere; }
